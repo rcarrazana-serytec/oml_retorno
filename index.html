@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RETOML — Generador & Validador · Ser&Tec</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0e0f13;--surface:#161820;--surface2:#1e2029;--border:#2a2d3a;--border-bright:#3d4157;--accent:#4f9cf9;--green:#3ecf8e;--yellow:#f5c542;--red:#f55f5f;--text:#e2e4ef;--text-dim:#7f8399;--text-dimmer:#4a4f66;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh;line-height:1.6;}
+  header{border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);height:68px;}
+  .header-left{display:flex;align-items:center;gap:20px;}
+  .header-divider{width:1px;height:38px;background:var(--border-bright);flex-shrink:0;}
+  .header-app-name{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--accent);letter-spacing:2px;line-height:1;}
+  .header-app-sub{font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px;}
+  .header-badge{font-family:var(--mono);font-size:11px;color:var(--text-dim);border:1px solid var(--border);padding:4px 10px;border-radius:4px;}
+  .container{max-width:1400px;margin:0 auto;padding:32px 24px;}
+  .tabs{display:flex;gap:2px;margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px;width:fit-content;}
+  .tab{padding:8px 20px;border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:1px;color:var(--text-dim);border:none;background:transparent;transition:all 0.15s;}
+  .tab.active{background:var(--accent);color:#fff;}
+  .tab:hover:not(.active){color:var(--text);background:var(--border);}
+  .tab-panel{display:none;}.tab-panel.active{display:block;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:20px;}
+  .card-title{font-family:var(--mono);font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+  .config-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:6px;font-family:var(--mono);letter-spacing:0.5px;}
+  input[type="text"]{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:13px;padding:10px 14px;outline:none;}
+  input[type="text"]:focus{border-color:var(--accent);}
+  select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:13px;padding:10px 14px;outline:none;}
+  .drop-zone{border:2px dashed var(--border);border-radius:10px;padding:48px 24px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;background:var(--bg);}
+  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:rgba(79,156,249,0.04);}
+  .drop-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .drop-icon{font-size:36px;margin-bottom:12px;opacity:0.5;}
+  .drop-title{font-family:var(--mono);font-size:14px;color:var(--text);margin-bottom:4px;}
+  .drop-sub{font-size:12px;color:var(--text-dim);}
+  .drop-file-name{font-family:var(--mono);font-size:13px;color:var(--green);margin-top:12px;}
+  .mapper-grid{display:grid;grid-template-columns:1fr 40px 1fr;gap:6px 8px;align-items:center;}
+  .mapper-label{font-family:var(--mono);font-size:12px;color:var(--text-dim);text-align:right;padding-right:4px;}
+  .mapper-arrow{font-size:16px;color:var(--text-dimmer);text-align:center;}
+  .mapper-select{font-size:12px;padding:6px 10px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border-radius:7px;border:none;cursor:pointer;font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:0.5px;transition:all 0.15s;}
+  .btn-primary{background:var(--accent);color:#fff;}.btn-primary:hover{background:#3a8ee8;}
+  .btn-success{background:var(--green);color:#0e1a13;}.btn-success:hover{filter:brightness(0.9);}
+  .btn-outline{background:transparent;border:1px solid var(--border-bright);color:var(--text-dim);}
+  .btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-group{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;}
+  .table-scroll{overflow-x:auto;border-radius:8px;border:1px solid var(--border);max-height:540px;overflow-y:auto;}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px;}
+  th{background:var(--surface2);color:var(--text-dim);padding:8px 10px;text-align:left;font-weight:500;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2;}
+  td{padding:0;border-bottom:1px solid var(--border);position:relative;vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  /* celda */
+  .cell-wrap{position:relative;display:flex;align-items:center;min-width:90px;}
+  .cell-inner{display:block;padding:7px 10px;flex:1;outline:none;color:var(--text);background:transparent;white-space:nowrap;transition:background 0.1s;}
+  .cell-inner[contenteditable="true"]:hover{background:rgba(255,255,255,0.03);cursor:text;}
+  .cell-inner[contenteditable="true"]:focus{background:rgba(79,156,249,0.1);box-shadow:inset 0 0 0 1px var(--accent);}
+  td.cell-err  .cell-inner{background:rgba(245,95,95,0.1);color:var(--red);}
+  td.cell-warn .cell-inner{background:rgba(245,197,66,0.08);color:var(--yellow);}
+  td.cell-fixed .cell-inner{color:var(--text-dimmer);cursor:default;}
+  /* botón sugerencia */
+  .suggest-btn{display:none;flex-shrink:0;background:var(--accent);color:#fff;border:none;border-radius:3px;font-family:var(--mono);font-size:9px;padding:2px 5px;cursor:pointer;white-space:nowrap;letter-spacing:0.2px;line-height:1.5;margin-right:4px;}
+  td:hover .suggest-btn{display:inline-block;}
+  .suggest-btn:hover{background:#3a8ee8;}
+  /* dropdown */
+  .cell-dropdown{position:absolute;top:100%;left:0;z-index:400;background:#1a1c26;border:1px solid var(--accent);border-radius:6px;min-width:200px;max-height:240px;overflow-y:auto;box-shadow:0 8px 28px rgba(0,0,0,0.6);}
+  .cell-dropdown div{padding:7px 14px;font-family:var(--mono);font-size:11px;color:var(--text);cursor:pointer;white-space:nowrap;}
+  .cell-dropdown div:hover{background:rgba(79,156,249,0.2);color:var(--accent);}
+  .cell-dropdown .dd-section{color:var(--text-dimmer);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:5px 14px 2px;cursor:default;border-top:1px solid var(--border);}
+  .cell-dropdown .dd-section:hover{background:transparent;color:var(--text-dimmer);}
+  .cell-dropdown .dd-first{border-top:none;}
+  /* tooltip */
+  [data-tip]{position:relative;}
+  [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:0;background:#1a1c26;border:1px solid var(--border-bright);color:var(--text);font-size:11px;padding:8px 12px;border-radius:6px;white-space:pre-wrap;min-width:220px;max-width:420px;z-index:500;font-family:var(--sans);line-height:1.6;pointer-events:none;box-shadow:0 6px 16px rgba(0,0,0,0.5);}
+  td.cell-rownum{color:var(--text-dimmer);font-size:10px;padding:7px 8px;text-align:right;background:var(--surface2);border-right:1px solid var(--border);width:32px;}
+  .validation-summary{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+  .vs-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;}
+  .vs-num{font-family:var(--mono);font-size:28px;font-weight:600;display:block;line-height:1;margin-bottom:4px;}
+  .vs-num.red{color:var(--red);}.vs-num.yellow{color:var(--yellow);}.vs-num.green{color:var(--green);}
+  .vs-label{font-size:11px;color:var(--text-dim);}
+  .filename-box{background:var(--bg);border:1px solid var(--accent);border-radius:6px;padding:10px 16px;font-family:var(--mono);font-size:13px;color:var(--accent);margin-bottom:16px;letter-spacing:1px;}
+  .badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:4px;font-family:var(--mono);font-size:10px;font-weight:600;}
+  .badge-ok{background:rgba(62,207,142,0.15);color:var(--green);}
+  .badge-err{background:rgba(245,95,95,0.15);color:var(--red);}
+  .badge-warn{background:rgba(245,197,66,0.15);color:var(--yellow);}
+  td.cell-status{padding:4px 8px;text-align:center;white-space:nowrap;}
+  .steps{display:flex;align-items:center;margin-bottom:28px;overflow-x:auto;padding-bottom:4px;}
+  .step{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-dimmer);white-space:nowrap;}
+  .step.done{color:var(--green);}.step.active{color:var(--accent);}
+  .step-num{width:24px;height:24px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:600;flex-shrink:0;}
+  .step.done .step-num{background:var(--green);color:#0e1a13;border-color:var(--green);}
+  .step-sep{width:32px;height:1px;background:var(--border);margin:0 4px;flex-shrink:0;}
+  .info-box{background:rgba(79,156,249,0.07);border:1px solid rgba(79,156,249,0.2);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--text-dim);margin-bottom:16px;}
+  .info-box strong{color:var(--accent);}
+  ::-webkit-scrollbar{width:6px;height:6px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:3px;}
+  /* filtros de sección */
+  .filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+  .filter-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text-dim);font-family:var(--mono);font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s;letter-spacing:0.5px;}
+  .filter-btn:hover{border-color:var(--border-bright);color:var(--text);}
+  .filter-btn.active{color:#fff;}
+  .filter-btn.f-all.active{background:var(--accent);border-color:var(--accent);}
+  .filter-btn.f-err.active{background:var(--red);border-color:var(--red);}
+  .filter-btn.f-warn.active{background:var(--yellow);border-color:var(--yellow);color:#111;}
+  .filter-btn.f-ok.active{background:var(--green);border-color:var(--green);color:#0e1a13;}
+  .filter-count{font-size:11px;background:rgba(255,255,255,0.15);border-radius:10px;padding:1px 7px;font-weight:600;}
+  .filter-btn.f-warn.active .filter-count{background:rgba(0,0,0,0.15);}
+  .filter-btn.f-ok.active .filter-count{background:rgba(0,0,0,0.15);}
+  .empty-section{text-align:center;padding:36px;font-family:var(--mono);font-size:13px;color:var(--text-dimmer);}
+  /* columnas informativas — solo vista, no se exportan */
+  th.col-info{color:var(--text-dimmer);font-style:italic;border-right:2px solid var(--border-bright);}
+  th.col-info::after{content:' ℹ';font-size:9px;}
+  td.col-info{background:rgba(79,156,249,0.04);border-right:2px solid var(--border-bright);}
+  td.col-info .cell-inner{color:var(--text-dimmer);cursor:default;font-style:italic;}
+  .hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAk4AAAC0CAYAAABiz6OjAAB7DElEQVR4nO29d5we1X3n/z7ntadOUwUkEEU00cFgUwzY2BiMWxI7cUlPdtfZkv1tdje7sR13J3ay6bHT7TiOjWNisA2mg2kSCDACFVQRCKE6mvbU2845/XHn3HlGSDMjzQyS4Lz9ejxiyu33nO/5ls8XLBaLxWKxWCwWi8VisVgsFovFYrFYLBaLxWKxWCwWi8VisVgsFovFYrFYLBaLxWKxWCwWi8VisVgsFovFYrFYLBaLxWKxWCwWi8VisVgsFovFYrFYLBaLxWKxWCwWi8VisVgsFovFYrFYLBaLxWKxWCwWi8VisVgsFovFYrFYLBaLxWKxWCwWi8VisVgsFovFYrFYLBaLxWKxWCwWi8VisVgsFovFYrFYLBaLxWKxWCwWi8VisVgsFovFYrFYLBaLxWKxWCwWi8VisVgsFovFYrFYLBaLxWKxWCwWi8VisVgsE6EO1Y5XPf+c7jQbDAwOUqvV6Pb69Hp9ms0m9XodpRRxHFMoFOjr66NSqSCloFAoUK1WOeGEE7jgvAtO2fFbLBaLxWJ54/GaGB7Prn5O79i+ne3bt7N3717q9TrFYhGlFGmaAuA4DlJKALTWuK5LFEUAeJ4HQBzHAHieR71ex3EcgqBMuVzmnHPO4YILzrMGlcVisVgsM8a0BYMNG7bqFStW2LZtGwBJkhCnSb5jCctiuM4QKIU2rZRiUK6CNAJYBUoQOEDiYcqJIomhUiAVhCiUALIOjpI4bnU9wXOFdDCFNtfzN0y6bXJLBo6BVlDThFJrFQiDFBHCMIRqvVKSgqkBECYSoB3HBDm+u7rNFksFovFkjJkDbxwAXpJIAABaYE7bkNfnB8BQM+RRBKy4oONtDqL/y6A3cjEJxuIhqtXn+7g9t5YiGI0P0QaYBmAJMQJIE7SMXZ8INxBnDVPBBjYjKBKa8XJe4I0T4YTKfOqxgZeruKBZ0OcBsWSA1TgQhADI4HBX1XVBLX2g2k7QBAqUISAB1oAuCMCKKFVJKExXCEJQGRAA1oAuCMIa0bU0BAAKZQiAFmvJdqF3XWbMhJgACIAAAABJRU5ErkJggg==" alt="Ser&Tec" style="height:42px;width:auto;display:block;">
+    <div class="header-divider"></div>
+    <div>
+      <div class="header-app-name">RETOML</div>
+      <div class="header-app-sub">Generador &amp; Validador · Naturgy NOA</div>
+    </div>
+  </div>
+  <div class="header-badge">v2025.11</div>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('generar',this)">01 · GENERAR</button>
+    <button class="tab" onclick="switchTab('validar',this)">02 · VALIDAR TXT</button>
+    <button class="tab" onclick="switchTab('referencia',this)">03 · REFERENCIA</button>
+  </div>
+
+  <!-- ═══ TAB GENERAR ═══ -->
+  <div id="tab-generar" class="tab-panel active">
+    <div class="steps">
+      <div class="step active" id="step1"><div class="step-num">1</div> Configurar</div>
+      <div class="step-sep"></div>
+      <div class="step" id="step2"><div class="step-num">2</div> Cargar CSV</div>
+      <div class="step-sep"></div>
+      <div class="step" id="step3"><div class="step-num">3</div> Mapear columnas</div>
+      <div class="step-sep"></div>
+      <div class="step" id="step4"><div class="step-num">4</div> Revisar &amp; Descargar</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Configuración del archivo</div>
+      <div class="config-grid">
+        <div>
+          <label>CONTRATISTA</label>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-family:var(--mono);font-size:13px;color:var(--green);">SERYTEC</div>
+        </div>
+        <div>
+          <label>NRO LOTE <span style="color:var(--text-dimmer);font-size:10px;">(opcional — 5 dígitos, se completa con ceros)</span></label>
+          <input id="cfg-lote" type="text" maxlength="5" placeholder="Ej: 1 → 00001" oninput="updateFilenamePreview()">
+        </div>
+        <div>
+          <label>FECHA — desde CSV <span style="color:var(--accent);font-size:10px;">(FECHA_CIERRE_OML)</span></label>
+          <div id="cfg-fecha-display" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-family:var(--mono);font-size:13px;color:var(--text-dim);">Se detecta al cargar el CSV</div>
+        </div>
+        <div>
+          <label>HORA — momento de generación <span style="color:var(--accent);font-size:10px;">(automática)</span></label>
+          <div id="cfg-hora-display" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-family:var(--mono);font-size:13px;color:var(--text-dim);">Se fija al generar</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <label>NOMBRE DEL ARCHIVO (PREVIEW)</label>
+        <div id="filename-preview" class="filename-box">RETOML_SERYTEC_YYYYMMDD_HHMMSS.TXT</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Cargar archivo CSV</div>
+      <div class="info-box"><strong>Separador:</strong> punto y coma (;) o coma (,) — se detecta automáticamente.</div>
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" id="file-input" accept=".csv,.txt" onchange="handleFile(this.files[0])">
+        <div class="drop-icon">📂</div>
+        <div class="drop-title">Arrastrá el archivo CSV aquí</div>
+        <div class="drop-sub">o hacé click para seleccionar</div>
+        <div class="drop-file-name" id="drop-file-name"></div>
+      </div>
+    </div>
+
+    <div class="card hidden" id="card-mapper">
+      <div class="card-title">Mapeo de columnas</div>
+      <div class="info-box">Los alias conocidos (<strong>CODIGO_CIERRE_OML</strong>, <strong>FECHA_CIERRE_OML</strong>) se mapean automáticamente.</div>
+      <div class="mapper-grid" id="mapper-grid"></div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="generateTxt()">⚡ Generar tabla</button>
+      </div>
+    </div>
+
+    <div class="card hidden" id="card-generate">
+      <div class="card-title">Resultado — tabla editable</div>
+      <div class="validation-summary" id="gen-summary"></div>
+      <!-- Filtros de sección -->
+      <div class="filter-bar">
+        <button class="filter-btn f-all active" id="fbtn-all" onclick="setFilter('all',this)">📋 Todas <span class="filter-count" id="fc-all">0</span></button>
+        <button class="filter-btn f-err" id="fbtn-err" onclick="setFilter('err',this)">✗ Errores <span class="filter-count" id="fc-err">0</span></button>
+        <button class="filter-btn f-warn" id="fbtn-warn" onclick="setFilter('warn',this)">⚠ Advertencias <span class="filter-count" id="fc-warn">0</span></button>
+        <button class="filter-btn f-ok" id="fbtn-ok" onclick="setFilter('ok',this)">✓ OK <span class="filter-count" id="fc-ok">0</span></button>
+      </div>
+      <div class="info-box" style="margin-bottom:12px;">
+        Celdas en <span style="color:var(--red);font-weight:600;">rojo = error</span> · <span style="color:var(--yellow);font-weight:600;">amarillo = advertencia</span>.<br>
+        <strong>Click en celda</strong> para editar. Campos con opciones fijas muestran <strong>desplegable automático</strong>.<br>
+        Botón <span style="background:var(--accent);color:#fff;font-family:var(--mono);font-size:10px;padding:1px 5px;border-radius:3px;">→ valor</span> = sugerencia disponible, hacé click para aplicarla.
+      </div>
+      <div class="table-scroll" id="gen-table-scroll">
+        <table><thead><tr id="gen-table-head"></tr></thead><tbody id="gen-table-body"></tbody></table>
+      </div>
+      <div class="empty-section hidden" id="gen-empty">Sin filas en esta sección ✓</div>
+      <div class="filename-box" id="gen-filename" style="margin-top:16px;"></div>
+      <div class="btn-group">
+        <button class="btn btn-success" onclick="downloadTxt()">⬇ Descargar TXT</button>
+        <button class="btn btn-primary" onclick="renderTable()">↻ Revalidar todo</button>
+        <button class="btn btn-outline" onclick="resetAll()">↺ Nuevo archivo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB VALIDAR ═══ -->
+  <div id="tab-validar" class="tab-panel">
+    <div class="card">
+      <div class="card-title">Validar archivo TXT existente</div>
+      <div class="info-box">Cargá un TXT ya generado para verificar todas las reglas del formato RETOML.</div>
+      <div class="drop-zone" id="drop-zone-val">
+        <input type="file" id="file-input-val" accept=".txt,.csv" onchange="handleValFile(this.files[0])">
+        <div class="drop-icon">🔍</div>
+        <div class="drop-title">Arrastrá el archivo TXT aquí</div>
+        <div class="drop-sub">o hacé click para seleccionar</div>
+        <div class="drop-file-name" id="drop-val-name"></div>
+      </div>
+    </div>
+    <div id="val-result" class="hidden">
+      <div class="card">
+        <div class="card-title">Resultado de validación</div>
+        <div class="validation-summary" id="val-summary"></div>
+        <div id="val-errors-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Líneas del archivo</div>
+        <div class="table-scroll">
+          <table><thead><tr id="val-table-head"></tr></thead><tbody id="val-table-body"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB REFERENCIA ═══ -->
+  <div id="tab-referencia" class="tab-panel">
+    <div class="card">
+      <div class="card-title">Estructura del archivo RETOML (15 campos)</div>
+      <div class="table-scroll"><table><thead><tr><th>#</th><th>Campo</th><th>Tipo</th><th>NULL</th><th>Valores</th><th>Descripción</th></tr></thead><tbody id="ref-fields-table"></tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Movimientos permitidos</div>
+      <div class="table-scroll"><table><thead><tr><th>Tipo</th><th>Descripción</th><th>Otros ejecutados permitidos</th><th>Estado línea</th></tr></thead><tbody id="ref-mov-table"></tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Códigos de NO EJECUCIÓN (EJECUTADA = N)</div>
+      <div class="table-scroll"><table><thead><tr><th>Código</th><th>Detalle</th></tr></thead><tbody id="ref-noejec-table"></tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Códigos de EJECUCIÓN (EJECUTADA = S)</div>
+      <div class="table-scroll"><table><thead><tr><th>Código</th><th>Detalle</th></tr></thead><tbody id="ref-ejec-table"></tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">COD_MOTIVO por tipo de movimiento</div>
+      <div class="table-scroll"><table><thead><tr><th>Tipo</th><th>Motivo</th><th>Código</th></tr></thead><tbody id="ref-motivo-table"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════ DATOS DE DOMINIO ═══════════
+const CAMPOS=[
+  {key:'NRO_SUC_PTO_VTA',       nullable:false},
+  {key:'NRO_ASIG_OML_CONT',     nullable:false},
+  {key:'NRO_DET_ASIG_OML_CONT', nullable:false},
+  {key:'EJECUTADA',              nullable:false},
+  {key:'CODIGO_EJECUCION',       nullable:false},
+  {key:'OBSERVACIONES_CIERRE_OML',nullable:true},
+  {key:'TIPO_TRABAJO_EJECUTADO', nullable:false},
+  {key:'FECHA_VISITA_DOMICILIO', nullable:false},
+  {key:'NRO_MED_DOMICILIO',      nullable:true},
+  {key:'LECTURA_MED_DOMICILIO',  nullable:true},
+  {key:'ESTADO_LINEA_DOMICILIO', nullable:false},
+  {key:'COD_MOTIVO',             nullable:true},
+  {key:'NRO_MED_INSTALA',        nullable:true},
+  {key:'LECTURA_MED_INSTALA',    nullable:true},
+  {key:'NRO_TARJETA_VISITA',     nullable:true},
+];
+const ALIASES={CODIGO_EJECUCION:'CODIGO_CIERRE_OML',FECHA_VISITA_DOMICILIO:'FECHA_CIERRE_OML'};
+const PK_FIELDS=['NRO_SUC_PTO_VTA','NRO_ASIG_OML_CONT','NRO_DET_ASIG_OML_CONT'];
+const CODIGOS_EJECUTADO=[1000,1001];
+const CODIGOS_NO_EJECUTADO=[2004,2005,2006,2007,2008,2009,2010,3001,3004,3012,3014,5008,5009,5010,6005,6006,6007,6008,6009,6010,6011,6012,6013,6014,8004,8005,8006,9001];
+const NOEJEC={2004:'PUERTA DE NICHO SOLDADA',2005:'SIN REGULADOR',2006:'MEDIDOR INTERNO',2007:'GABINETE CON CANDADO',2008:'PUERTA DE NICHO ATORNILLADA',2009:'NICHO OBSTRUIDO',2010:'GABINETE CON REJAS',3001:'ENTES OFICIALES',3004:'COMEDOR COMUNITARIO',3012:'CLIENTE CON PAGO A CUENTA',3014:'BOLETA ABONADA',5008:'OPOSICION DEL CLIENTE',5009:'NO SE PERMITIO EL INGRESO',5010:'CLIENTE AUSENTE',6005:'CAMBIO TITULARIDAD',6006:'RETIRADO SIN CONFIRMACION',6007:'NO SE UBICA EN EL DOMICILIO',6008:'DIFIERE MEDIDOR',6009:'MEDIDOR CRUZADO',6010:'LLAVE CONTRA LA PARED',6011:'LLAVE ROTA',6012:'GABINETE CON TELA METALICA',6013:'CLIENTE SIN MEDIDOR',6014:'MANTIENE ESTADO - CEPO ROTO',8004:'SIN VISITAR DOMICILIO',8005:'INCLEMENCIA DEL TIEMPO',8006:'CIERRE ANULADO POR GASNOR',9001:'MOVIMIENTO NO EJECUTADO'};
+const EJEC={1000:'Trabajo realizado con artefactos clausurados',1001:'Trabajo realizado'};
+const MOV={
+  IN:{desc:'INSTALACION',          otros:['CS'],           estado:'RIN'},
+  CA:{desc:'CAMBIO',               otros:['CS'],           estado:'RIN'},
+  CF:{desc:'CIERRE FALTA DE PAGO', otros:['CS','RE'],      estado:'CFP'},
+  CP:{desc:'CIERRE A PEDIDO',      otros:['CS','RE'],      estado:'CAP'},
+  CS:{desc:'CIERRE POR SEGURIDAD', otros:['RE'],           estado:'CPS'},
+  RE:{desc:'RETIRO',               otros:[],               estado:'RET'},
+  VF:{desc:'VERIF. FUNCIONAMIENTO',otros:['CS','RE','CA'], estado:''},
+  VL:{desc:'VERIF. LECTURA',       otros:['CS','RE','CA'], estado:''},
+};
+const ESTADO_VALS=['CAP','CFP','CPS','NOR','REH','RET','RIN','SIN'];
+const COD_MOTIVO_MAP={
+  CA:['CA0001','CA0002','CA0003','CA0004','CA0005','CA0006','CA0007','CA0008','CA0009','CA0010','CA0011','CA0012','CA0013','CA0014','CA0015','CA0016','CA0017','CA0018','CA0019','CA0020','CA0021','CA0022','CA0023','CA0024','CA0025','CA0026','CA0027','CA0028','CA0029','CA0030','CA0031','CA0032','CA0033','CA0034','CA0035','CA0036','CA0037','CA0038','CA0039','CA0040','CA0041','CA0042','CA0043','CA0044','CA0045','CA0046','CA0047','CA0048','CA0049','CA0050','CA0051','CA0052','CA0053','CA0054','CA0055','CA0056','CA0057','CA0058','CA0059','CA0060','CA0061','CA0062','CA0063','CA0064'],
+  CF:['CF0001'],CP:['CP0001','CP0002'],CS:['CS0001','CS0002','CS0003'],
+  IN:['IN0001','IN0002'],
+  RE:['RE0001','RE0002','RE0003','RE0004','RE0005','RE0006','RE0007','RE0008','RE0009','RE0010','RE0011','RE0012','RE0013','RE0014','RE0015','RE0016','RE0017','RE0018'],
+  VF:['VF0001'],VL:['VL0001'],
+};
+const MOTIVO_DESC={
+  CA0001:'RECAMBIO POR RTI 2019',CA0002:'VISOR ROTO',CA0003:'MEDIDOR TRABADO',CA0004:'MEDIDOR MARCA HACIA ATRAS',CA0005:'DIGITOS CRUZADOS/CAIDOS',CA0006:'CAMBIO P/BCO DE PRUEBAS',CA0007:'CAMBIO SOLIC POR USUARIO',CA0008:'VISOR SULFATADO/CON AGUA',CA0009:'RECAMBIO POR RTI 2025',CA0010:'RECAMBIO POR RTI 2018',CA0011:'PROY. REEMPLAZO MED. 2021',CA0012:'ADELANTA',CA0013:'ATRASA',CA0014:'AUMENTO CONSUMO',CA0015:'MEDIDOR CRUZADO',CA0016:'DEFECTOS DE INDICE',CA0017:'DESOLDADO - CAJA INDICE',CA0018:'DESOLDADO - FONDO',CA0019:'DESOLDADO - FRENTE',CA0020:'DESOLDADO - PILAR FRENTE',CA0021:'DESOLDADO - PILAR SALIDA',CA0022:'DESOLDADO - RESPALDO',CA0023:'DESOLDADO - TAPA',CA0024:'DISMINUCION CONSUMO',CA0025:'ESCAPE CAJA RELOJ',CA0026:'EXPLOSION',CA0027:'FALTA DE ESPACIO - NICHO INCONVENIENTE',CA0028:'FALTA DE ESPACIO - NO TOMAR ESTADO BATERIAS',CA0029:'FALTA DE ESPACIO - NO TOMAR ESTADO MEDIDOR',CA0030:'FALTA DE ESPACIO - MEDIANERIA',CA0031:'FALTA DE ESPACIO - TRASLADAR MEDIDOR',CA0032:'FALTA DE ESPACIO - REFORMA BATERIA',CA0033:'FALTA DE ESPACIO - REFORMA FINCA',CA0034:'FALTA DE ESPACIO - VARIOS',CA0035:'INCENDIO',CA0036:'MANTENIMIENTO',CA0037:'NO DA GAS',CA0038:'NO MARCA',CA0039:'NO MARCA CON POCO CONSUMO',CA0040:'NO RESISTE PRESION',CA0041:'OSCILA',CA0042:'OTROS - FALTA DE DECLIVE',CA0043:'OTROS - VARIOS',CA0044:'PERDIDA ROSCA ENTRADA',CA0045:'PERDIDA ROSCA SALIDA',CA0046:'PERDIDA POR VISOR',CA0047:'PICADO - COSTADO',CA0048:'PICADO - FONDO',CA0049:'PICADO - FRENTE',CA0050:'PICADO - PILAR ENTRADA',CA0051:'PICADO - PILAR SALIDA',CA0052:'PICADO - RESPALDO',CA0053:'PICADO - TAPA',CA0054:'PIERDE JUNTA CUERPO',CA0055:'ROTO',CA0056:'SEGURIDAD - EN COCINA',CA0057:'SEGURIDAD - EN DEPTO',CA0058:'SEGURIDAD - EVITAR PELIGROS',CA0059:'SEGURIDAD - EVITAR ROTURAS',CA0060:'SEGURIDAD - REGISTRACION',CA0061:'SEGURIDAD - VARIOS',CA0062:'VIOLADO',CA0063:'VISOR EMPAÑADO',CA0064:'MEDIDOR DISTINTO',
+  CF0001:'CIERRE FALTA PAGO',
+  CP0001:'CORTE A PEDIDO',CP0002:'CIERRE A PEDIDO',
+  CS0001:'CIERRE POR SEGURIDAD',CS0002:'REGULADOR CON FALLA',CS0003:'PERDIDA INSTALACION INTERNA',
+  IN0001:'PAGO DE DEUDA',IN0002:'CLIENTE AUSENTE EN INSTALACION',
+  RE0001:'NO USA',RE0002:'NO USA - AUXILIAR',RE0003:'NO USA - EN MAL ESTADO',RE0004:'ILICITO',RE0005:'NO USA - UBICACION INCONVENIENTE',RE0006:'REPARACION DE MEDIDOR',RE0007:'RETIRO POR CIERRE DE GAS',RE0008:'ROTURA DE MEDIDOR',RE0009:'SUELTO',RE0010:'VARIOS',RE0011:'FALTA DE PAGO',RE0012:'EXTRAVIADO',RE0013:'DEMOLICION O REFACCION',RE0014:'A PEDIDO',RE0015:'MEDIDOR INACTIVO',RE0016:'POR SEGURIDAD',RE0017:'NO USA - GAS INDUSTRIAL',RE0018:'ROBADO',
+  VF0001:'VERIFICACION DE FUNCIONAMIENTO',
+  VL0001:'VERIFICACION DE LECTURA',
+};
+
+// ═══════════ DETECCIÓN POR PALABRAS CLAVE EN OBSERVACIONES ═══════════
+// Si EJECUTADA=S pero las observaciones sugieren no ejecución, mostrar advertencia
+const OBS_KEYWORDS = [
+  {words:['medidor interno','interno'],          cod:2006, label:'MEDIDOR INTERNO'},
+  {words:['sin acceso','sin ingreso','no ingres','no se permit','no permit'],
+                                                  cod:5009, label:'NO SE PERMITIO EL INGRESO'},
+  {words:['candado','con llave','llave candado'], cod:2007, label:'GABINETE CON CANDADO'},
+  {words:['soldad','nicho soldado','puerta sold'],cod:2004, label:'PUERTA DE NICHO SOLDADA'},
+  {words:['atornillad'],                          cod:2008, label:'PUERTA DE NICHO ATORNILLADA'},
+  {words:['nicho obstruido','obstruido'],         cod:2009, label:'NICHO OBSTRUIDO'},
+  {words:['rejas','reja'],                        cod:2010, label:'GABINETE CON REJAS'},
+  {words:['ausente','no estaba','cliente no'],    cod:5010, label:'CLIENTE AUSENTE'},
+  {words:['oposicion','se opuso','no quiso'],     cod:5008, label:'OPOSICION DEL CLIENTE'},
+  {words:['sin regulador','regulador','sin reg'],  cod:2005, label:'SIN REGULADOR'},
+  {words:['no se ubica','no ubica','domicilio incorrecto','domicilio erroneo'],
+                                                  cod:6007, label:'NO SE UBICA EN EL DOMICILIO'},
+  {words:['medidor cruzado','cruzado'],           cod:6009, label:'MEDIDOR CRUZADO'},
+  {words:['medidor distinto','difiere','distinto'],cod:6008, label:'DIFIERE MEDIDOR'},
+  {words:['llave contra','contra la pared'],      cod:6010, label:'LLAVE CONTRA LA PARED'},
+  {words:['llave rota','llave rot'],              cod:6011, label:'LLAVE ROTA'},
+  {words:['tela metalica','tela metálica'],       cod:6012, label:'GABINETE CON TELA METALICA'},
+  {words:['sin medidor','no tiene medidor'],      cod:6013, label:'CLIENTE SIN MEDIDOR'},
+  {words:['inclemencia','lluvia','tormenta'],     cod:8005, label:'INCLEMENCIA DEL TIEMPO'},
+  {words:['sin visitar','no visit'],              cod:8004, label:'SIN VISITAR DOMICILIO'},
+];
+function detectObsKeyword(obs){
+  if(!obs)return null;
+  const lower=obs.toLowerCase();
+  for(const entry of OBS_KEYWORDS){
+    if(entry.words.some(w=>lower.includes(w)))return entry;
+  }
+  return null;
+}
+const FIELD_OPTIONS={
+  EJECUTADA:[{v:'S',l:'S — Ejecutada'},{v:'N',l:'N — No ejecutada'}],
+  TIPO_TRABAJO_EJECUTADO:Object.keys(MOV).map(k=>({v:k,l:`${k} — ${MOV[k].desc}`})),
+  ESTADO_LINEA_DOMICILIO:ESTADO_VALS.map(v=>({v,l:v})),
+};
+
+// ═══════════ ESTADO GLOBAL ═══════════
+let csvHeaders=[],csvRows=[],columnMapping={},tableData=[],generatedFilename='';
+let activeDropdown=null;
+let currentFilter='all';
+
+document.addEventListener('DOMContentLoaded',()=>{
+  updateFilenamePreview();
+  buildReferenceTab();
+  setupDrop('drop-zone',f=>handleFile(f));
+  setupDrop('drop-zone-val',f=>handleValFile(f));
+  document.addEventListener('click',e=>{if(activeDropdown&&!activeDropdown.contains(e.target))closeDropdown();});
+});
+
+// ═══════════ HELPERS ═══════════
+function setupDrop(id,handler){
+  const el=document.getElementById(id);
+  el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over');});
+  el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
+  el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('drag-over');if(e.dataTransfer.files[0])handler(e.dataTransfer.files[0]);});
+}
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');btn.classList.add('active');
+}
+function setStep(n){[1,2,3,4].forEach(i=>{const el=document.getElementById('step'+i);el.classList.remove('active','done');if(i<n)el.classList.add('done');if(i===n)el.classList.add('active');});}
+function getTimeStr(){const n=new Date();return String(n.getHours()).padStart(2,'0')+String(n.getMinutes()).padStart(2,'0')+String(n.getSeconds()).padStart(2,'0');}
+function parseDate(raw){
+  if(!raw)return null;
+  const dp=raw.trim().split(' ')[0].split('T')[0];
+  let y,m,d;
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dp)){[d,m,y]=dp.split('/');}
+  else if(/^\d{4}-\d{1,2}-\d{1,2}$/.test(dp)){[y,m,d]=dp.split('-');}
+  else if(/^\d{8}$/.test(dp))return dp;
+  else return null;
+  return y&&m&&d?`${y}${String(m).padStart(2,'0')}${String(d).padStart(2,'0')}`:null;
+}
+function detectDate(){
+  for(const row of tableData){const p=parseDate(row['FECHA_VISITA_DOMICILIO']||'');if(p&&!p.startsWith('1900'))return p;}
+  return null;
+}
+function updateFilenamePreview(){
+  const loteInput=document.getElementById('cfg-lote');
+  const loteDigits=(loteInput?loteInput.value:'').replace(/\D/g,'').trim();
+  const lote=loteDigits?'_'+loteDigits.padStart(5,'0'):'';
+  const fecha=detectDate()||'YYYYMMDD';
+  document.getElementById('filename-preview').textContent=`RETOML_SERYTEC_${fecha}_HHMMSS${lote}.TXT`;
+}
+
+// ═══════════ CSV ═══════════
+function handleFile(file){
+  if(!file)return;
+  document.getElementById('drop-file-name').textContent='✓ '+file.name;
+  const r=new FileReader();r.onload=e=>parseCSV(e.target.result);r.readAsText(file,'UTF-8');
+}
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2){alert('El CSV necesita encabezado + datos.');return;}
+  const fl=lines[0].replace(/^\uFEFF/,'');
+  const sep=fl.split(';').length>fl.split(',').length?';':',';
+  csvHeaders=fl.split(sep).map(h=>h.trim().replace(/^"|"$/g,''));
+  csvRows=lines.slice(1).map(l=>{
+    const vals=l.split(sep).map(v=>v.trim().replace(/^"|"$/g,''));
+    const obj={};csvHeaders.forEach((h,i)=>obj[h]=vals[i]||'');return obj;
+  });
+  buildMapper();setStep(3);
+}
+
+// ═══════════ MAPPER ═══════════
+function buildMapper(){
+  const grid=document.getElementById('mapper-grid');
+  grid.innerHTML='';columnMapping={};
+  CAMPOS.forEach(campo=>{
+    const alias=ALIASES[campo.key];
+    const autoMatch=csvHeaders.find(h=>h.toUpperCase()===campo.key.toUpperCase())||
+                    (alias?csvHeaders.find(h=>h.toUpperCase()===alias.toUpperCase()):null);
+    columnMapping[campo.key]=autoMatch||'';
+    const lbl=document.createElement('div');lbl.className='mapper-label';
+    lbl.textContent=campo.key+(campo.nullable?'':' *');
+    const arr=document.createElement('div');arr.className='mapper-arrow';arr.textContent='→';
+    const sel=document.createElement('select');sel.className='mapper-select';
+    sel.innerHTML=`<option value="">(no mapear)</option>`+
+      csvHeaders.map(h=>`<option value="${h}"${h===autoMatch?' selected':''}>${h}</option>`).join('');
+    sel.addEventListener('change',()=>{columnMapping[campo.key]=sel.value;if(campo.key==='FECHA_VISITA_DOMICILIO')refreshDatePreview();});
+    grid.appendChild(lbl);grid.appendChild(arr);grid.appendChild(sel);
+  });
+  document.getElementById('card-mapper').classList.remove('hidden');
+  refreshDatePreview();
+}
+function refreshDatePreview(){
+  tableData=buildTableData();
+  const fecha=detectDate();
+  const el=document.getElementById('cfg-fecha-display');
+  if(fecha){el.textContent=fecha;el.style.color='var(--green)';}
+  else{el.textContent='No detectada — verificá mapeo de FECHA_CIERRE_OML';el.style.color='var(--yellow)';}
+  updateFilenamePreview();
+}
+function buildTableData(){
+  return csvRows.map(row=>{
+    const obj={};
+    CAMPOS.forEach(c=>{
+      const col=columnMapping[c.key];
+      let v=col?(row[col]||''):'';
+      if(c.key==='FECHA_VISITA_DOMICILIO')v=parseDate(v)||v;
+      obj[c.key]=v;
+    });
+    obj['_raw']=row; // original para sugerencias
+    return obj;
+  });
+}
+
+// ═══════════ GENERAR ═══════════
+function generateTxt(){
+  tableData=buildTableData();
+  const fecha=detectDate()||'XXXXXXXX';
+  const hora=getTimeStr();
+  const loteInput=document.getElementById('cfg-lote');
+  const loteDigits=(loteInput?loteInput.value:'').replace(/\D/g,'').trim();
+  const lote=loteDigits?'_'+loteDigits.padStart(5,'0'):'';
+  generatedFilename=`RETOML_SERYTEC_${fecha}_${hora}${lote}.TXT`;
+  console.log('lote:',lote,'filename:',generatedFilename);
+  const horaEl=document.getElementById('cfg-hora-display');
+  horaEl.textContent=hora;horaEl.style.color='var(--green)';
+  document.getElementById('filename-preview').textContent=generatedFilename;
+  document.getElementById('gen-filename').textContent=generatedFilename;
+  renderTable();
+  document.getElementById('card-generate').classList.remove('hidden');
+  document.getElementById('card-generate').scrollIntoView({behavior:'smooth',block:'start'});
+  setStep(4);
+}
+
+// ═══════════ RENDERIZAR TABLA ═══════════
+function renderTable(){
+  const head=document.getElementById('gen-table-head');
+  const body=document.getElementById('gen-table-body');
+  const infoFields=getInfoFields();
+  head.innerHTML='<th style="width:32px">#</th>'+
+    infoFields.map(f=>`<th class="col-info">${f.label}</th>`).join('')+
+    CAMPOS.map(c=>`<th>${c.key}</th>`).join('')+'<th>Estado</th>';
+  body.innerHTML='';
+  let ec=0,wc=0;
+  tableData.forEach((row,ri)=>{
+    const{errors,warnings}=validateRow(row,ri+1);
+    ec+=errors.length;wc+=warnings.length;
+    const vm={};
+    errors.forEach(e=>vm[e.field]={type:'err',msg:e.msg,suggest:e.suggest!=null?e.suggest:null});
+    warnings.forEach(w=>{if(!vm[w.field])vm[w.field]={type:'warn',msg:w.msg,suggest:w.suggest!=null?w.suggest:null};});
+    const hasErr=Object.values(vm).some(v=>v.type==='err');
+    const hasWarn=!hasErr&&Object.values(vm).some(v=>v.type==='warn');
+    const tr=document.createElement('tr');
+    tr.dataset.status=hasErr?'err':hasWarn?'warn':'ok';
+    const tdN=document.createElement('td');tdN.className='cell-rownum';tdN.textContent=ri+1;tr.appendChild(tdN);
+    // columnas informativas
+    getInfoFields().forEach(inf=>{
+      const td=document.createElement('td');td.className='col-info';
+      const sp=document.createElement('span');sp.className='cell-inner';
+      sp.textContent=row['_raw']?.[inf.key]||'—';
+      td.appendChild(sp);tr.appendChild(td);
+    });
+    CAMPOS.forEach(campo=>{
+      tr.appendChild(buildCell(campo,row,ri,vm,tr));
+    });
+    const tdS=document.createElement('td');tdS.className='cell-status';
+    tdS.innerHTML=hasErr?'<span class="badge badge-err">ERROR</span>':hasWarn?'<span class="badge badge-warn">WARN</span>':'<span class="badge badge-ok">OK</span>';
+    tr.appendChild(tdS);body.appendChild(tr);
+  });
+  updateSummary(ec,wc);
+}
+
+function buildCell(campo,row,ri,vm,tr){
+  const td=document.createElement('td');
+  const v=vm[campo.key];
+  const isFixed=PK_FIELDS.includes(campo.key);
+  if(v)td.className=v.type==='err'?'cell-err':'cell-warn';
+  else if(isFixed)td.className='cell-fixed';
+  if(v)td.setAttribute('data-tip',v.msg+(v.suggest!=null?'\n\n💡 Sugerencia: '+v.suggest:''));
+
+  const wrap=document.createElement('div');wrap.className='cell-wrap';
+  const span=document.createElement('span');span.className='cell-inner';
+  span.textContent=row[campo.key]||'';
+
+  const isEditable=!isFixed&&!!v; // solo celdas con error o advertencia
+  if(isEditable){
+    span.contentEditable='true';span.spellcheck=false;
+    span.addEventListener('blur',()=>{tableData[ri][campo.key]=span.textContent.trim();revalidateRow(tr,ri);});
+    span.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();span.blur();}});
+    span.addEventListener('focus',()=>{
+      closeDropdown();
+      if(FIELD_OPTIONS[campo.key]||campo.key==='CODIGO_EJECUCION'||campo.key==='COD_MOTIVO'){
+        showDropdown(td,span,campo.key,ri,tr);
+      }
+    });
+  } else {
+    span.style.cursor='default';
+  }
+  wrap.appendChild(span);
+
+  // botón sugerencia
+  if(v&&v.suggest!=null){
+    const sb=document.createElement('button');sb.className='suggest-btn';
+    sb.textContent='→ '+v.suggest;
+    sb.addEventListener('mousedown',e=>{
+      e.preventDefault();
+      span.textContent=v.suggest;
+      tableData[ri][campo.key]=v.suggest;
+      revalidateRow(tr,ri);
+    });
+    wrap.appendChild(sb);
+  }
+  td.appendChild(wrap);
+  return td;
+}
+
+function updateSummary(ec,wc){
+  document.getElementById('gen-summary').innerHTML=`
+    <div class="vs-item"><span class="vs-num green">${tableData.length}</span><span class="vs-label">Total filas</span></div>
+    <div class="vs-item"><span class="vs-num ${ec>0?'red':'green'}">${ec}</span><span class="vs-label">Errores</span></div>
+    <div class="vs-item"><span class="vs-num ${wc>0?'yellow':'green'}">${wc}</span><span class="vs-label">Advertencias</span></div>
+    <div class="vs-item"><span class="vs-num ${ec===0?'green':'red'}">${ec===0?'✓':'✗'}</span><span class="vs-label">${ec===0?'VÁLIDO':'CON ERRORES'}</span></div>`;
+  // contadores en botones de filtro
+  const rows=[...document.querySelectorAll('#gen-table-body tr')];
+  let cErr=0,cWarn=0,cOk=0;
+  rows.forEach(tr=>{const s=tr.dataset.status||'ok';if(s==='err')cErr++;else if(s==='warn')cWarn++;else cOk++;});
+  document.getElementById('fc-all').textContent=rows.length;
+  document.getElementById('fc-err').textContent=cErr;
+  document.getElementById('fc-warn').textContent=cWarn;
+  document.getElementById('fc-ok').textContent=cOk;
+  applyFilter(currentFilter);
+}
+function setFilter(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilter(f);
+}
+function applyFilter(f){
+  const rows=[...document.querySelectorAll('#gen-table-body tr')];
+  let visible=0;
+  rows.forEach(tr=>{
+    const s=tr.dataset.status||'ok';
+    const show=(f==='all')||(f==='err'&&s==='err')||(f==='warn'&&s==='warn')||(f==='ok'&&s==='ok');
+    tr.style.display=show?'':'none';
+    if(show)visible++;
+  });
+  const scroll=document.getElementById('gen-table-scroll');
+  const empty=document.getElementById('gen-empty');
+  if(visible===0){scroll.style.display='none';empty.classList.remove('hidden');}
+  else{scroll.style.display='';empty.classList.add('hidden');}
+}
+
+function revalidateRow(tr,ri){
+  const row=tableData[ri];
+  const{errors,warnings}=validateRow(row,ri+1);
+  const vm={};
+  errors.forEach(e=>vm[e.field]={type:'err',msg:e.msg,suggest:e.suggest!=null?e.suggest:null});
+  warnings.forEach(w=>{if(!vm[w.field])vm[w.field]={type:'warn',msg:w.msg,suggest:w.suggest!=null?w.suggest:null};});
+  const cells=tr.querySelectorAll('td');
+  const infoOffset=getInfoFields().length;
+  CAMPOS.forEach((campo,i)=>{
+    const td=cells[i+1+infoOffset];if(!td)return;
+    const v=vm[campo.key];td.className='';td.removeAttribute('data-tip');
+    if(v){td.className=v.type==='err'?'cell-err':'cell-warn';td.setAttribute('data-tip',v.msg+(v.suggest!=null?'\n\n💡 Sugerencia: '+v.suggest:''));}
+    else if(PK_FIELDS.includes(campo.key))td.className='cell-fixed';
+    const oldSb=td.querySelector('.suggest-btn');if(oldSb)oldSb.remove();
+    const span=td.querySelector('.cell-inner');
+    const isFixed=PK_FIELDS.includes(campo.key);
+    // actualizar editabilidad según nuevo estado
+    if(span){
+      if(!isFixed&&v){
+        span.contentEditable='true';span.style.cursor='';
+      } else {
+        span.contentEditable='false';span.style.cursor='default';
+      }
+    }
+    if(v&&v.suggest!=null){
+      const wrap=td.querySelector('.cell-wrap');
+      if(wrap&&span){
+        const sb=document.createElement('button');sb.className='suggest-btn';
+        sb.textContent='→ '+v.suggest;
+        sb.addEventListener('mousedown',e=>{
+          e.preventDefault();span.textContent=v.suggest;tableData[ri][campo.key]=v.suggest;revalidateRow(tr,ri);
+        });
+        wrap.appendChild(sb);
+      }
+    }
+  });
+  const hasErr=Object.values(vm).some(v=>v.type==='err');
+  const hasWarn=!hasErr&&Object.values(vm).some(v=>v.type==='warn');
+  tr.dataset.status=hasErr?'err':hasWarn?'warn':'ok';
+  cells[cells.length-1].innerHTML=hasErr?'<span class="badge badge-err">ERROR</span>':hasWarn?'<span class="badge badge-warn">WARN</span>':'<span class="badge badge-ok">OK</span>';
+  let ec=0,wc=0;tableData.forEach((r,i)=>{const{errors:e,warnings:w}=validateRow(r,i+1);ec+=e.length;wc+=w.length;});
+  updateSummary(ec,wc);
+}
+
+// ═══════════ DROPDOWN ═══════════
+function showDropdown(td,span,fieldKey,ri,tr){
+  closeDropdown();
+  const dd=document.createElement('div');dd.className='cell-dropdown';
+  let items=[];
+  if(fieldKey==='CODIGO_EJECUCION'){
+    const ejec=(tableData[ri].EJECUTADA||'').toUpperCase();
+    if(ejec!=='N'){
+      const sec=document.createElement('div');sec.className='dd-section dd-first';sec.textContent='EJECUTADO';dd.appendChild(sec);
+      Object.entries(EJEC).forEach(([k,v])=>items.push({v:String(k),l:`${k} — ${v}`}));
+    }
+    if(ejec!=='S'){
+      if(ejec==='N'){const sec=document.createElement('div');sec.className='dd-section dd-first';sec.textContent='NO EJECUTADO';dd.appendChild(sec);}
+      else{const sec=document.createElement('div');sec.className='dd-section';sec.textContent='NO EJECUTADO';dd.appendChild(sec);}
+      Object.entries(NOEJEC).forEach(([k,v])=>items.push({v:String(k),l:`${k} — ${v}`}));
+    }
+  } else if(fieldKey==='COD_MOTIVO'){
+    const tipo=(tableData[ri].TIPO_TRABAJO_EJECUTADO||'').toUpperCase();
+    const lista=COD_MOTIVO_MAP[tipo]||Object.keys(MOTIVO_DESC);
+    const sec=document.createElement('div');sec.className='dd-section dd-first';sec.textContent=tipo||'TODOS';dd.appendChild(sec);
+    lista.forEach(c=>items.push({v:c,l:`${c} — ${MOTIVO_DESC[c]||''}`}));
+  } else {
+    const opts=FIELD_OPTIONS[fieldKey]||[];
+    if(opts.length){const sec=document.createElement('div');sec.className='dd-section dd-first';sec.textContent='OPCIONES';dd.appendChild(sec);}
+    items=opts;
+  }
+  if(!items.length){return;}
+  items.forEach(opt=>{
+    const item=document.createElement('div');item.textContent=opt.l;
+    item.addEventListener('mousedown',e=>{
+      e.preventDefault();span.textContent=opt.v;tableData[ri][fieldKey]=opt.v;closeDropdown();revalidateRow(tr,ri);
+    });
+    dd.appendChild(item);
+  });
+  td.style.position='relative';td.appendChild(dd);activeDropdown=dd;
+}
+function closeDropdown(){if(activeDropdown){activeDropdown.remove();activeDropdown=null;}}
+
+// Columnas informativas — visibles en tabla pero NO exportadas
+// Lee qué campos están disponibles en el CSV cargado
+const INFO_FIELD_CANDIDATES=[
+  {key:'NRO_ORD_MOV_MED', aliases:['NRO_ORD_MOV_MED','NRO_OML','NRO_ORDEN','ORDEN_MOV','ID_OML','NRO_TAREA'], label:'NRO OML'},
+  {key:'TIPO_MOV_MED',     aliases:['TIPO_MOV_MED','TIPO_MOV_REQUERIDO','TIPO_TRABAJO_REQUERIDO','TIPO_MOV'], label:'TIPO REQUERIDO'},
+];
+function getInfoFields(){
+  if(!csvHeaders||!csvHeaders.length)return[];
+  return INFO_FIELD_CANDIDATES.map(cand=>{
+    const found=cand.aliases.find(a=>csvHeaders.some(h=>h.toUpperCase()===a.toUpperCase()));
+    if(!found)return null;
+    const realKey=csvHeaders.find(h=>h.toUpperCase()===found.toUpperCase());
+    return{key:realKey,label:cand.label};
+  }).filter(Boolean);
+}
+
+// ═══════════ VALIDACIÓN ═══════════
+function validateRow(f,rowNum){
+  const errors=[],warnings=[];
+  const err=(field,msg,suggest)=>errors.push({row:rowNum,field,msg,suggest:suggest!==undefined?suggest:null});
+  const warn=(field,msg,suggest)=>warnings.push({row:rowNum,field,msg,suggest:suggest!==undefined?suggest:null});
+
+  const ejec=(f.EJECUTADA||'').toUpperCase();
+  const cod=parseInt(f.CODIGO_EJECUCION);
+  const tipo=(f.TIPO_TRABAJO_EJECUTADO||'').toUpperCase();
+  const est=(f.ESTADO_LINEA_DOMICILIO||'').toUpperCase();
+  const raw=f['_raw']||{};
+
+  // PK
+  PK_FIELDS.forEach(k=>{if(!f[k]||isNaN(parseInt(f[k]))||parseInt(f[k])<=0)err(k,'Debe ser un número entero > 0');});
+
+  // EJECUTADA
+  if(!['S','N'].includes(ejec))err('EJECUTADA','Debe ser S o N',ejec?null:'S');
+
+  // CODIGO_EJECUCION
+  if(isNaN(cod)||cod<=0){err('CODIGO_EJECUCION','Debe ser un número > 0');}
+  else if(ejec==='S'&&!CODIGOS_EJECUTADO.includes(cod)){
+    err('CODIGO_EJECUCION',`Código ${cod} inválido para EJECUTADO. Válidos: ${CODIGOS_EJECUTADO.join(', ')}`,String(CODIGOS_EJECUTADO[1]));
+  } else if(ejec==='N'&&!CODIGOS_NO_EJECUTADO.includes(cod)){
+    err('CODIGO_EJECUCION',`Código ${cod} inválido para NO EJECUTADO. Revisá tabla de no ejecución`);
+  }
+
+  // DETECCIÓN POR PALABRAS CLAVE EN OBSERVACIONES
+  const obsText=f.OBSERVACIONES_CIERRE_OML||'';
+  const obsMatch=detectObsKeyword(obsText);
+  if(obsMatch&&ejec==='S'){
+    warn('OBSERVACIONES_CIERRE_OML',
+      `Observaciones sugieren NO EJECUCIÓN: "${obsMatch.label}" (cód. ${obsMatch.cod}).
+Verificar si EJECUTADA debería ser N con CODIGO_EJECUCION=${obsMatch.cod}.`
+    );
+    warn('EJECUTADA',
+      `Observaciones indican posible no ejecución ("${obsMatch.label}"). ¿Debería ser N?`,
+      'N'
+    );
+    warn('CODIGO_EJECUCION',
+      `Si no se ejecutó por "${obsMatch.label}", el código correspondiente es ${obsMatch.cod}.`,
+      String(obsMatch.cod)
+    );
+  }
+
+  // TIPO_TRABAJO_EJECUTADO
+  // tipoReq se define más abajo, pero lo necesitamos aquí — lo calculamos anticipado
+  const tipoReqAnticipado=(raw['TIPO_MOV_MED']||raw['TIPO_MOV_REQUERIDO']||raw['TIPO_TRABAJO_REQUERIDO']||raw['TIPO_MOV']||'').toUpperCase();
+  if(!Object.keys(MOV).includes(tipo)){
+    // si está vacío o inválido, sugerir el tipo requerido del CSV
+    const suggTipo=tipoReqAnticipado||null;
+    err('TIPO_TRABAJO_EJECUTADO',
+      tipo
+        ? `Tipo "${tipo}" inválido. Válidos: ${Object.keys(MOV).join(', ')}`
+        : `Vacío. ${tipoReqAnticipado?'Debe ser el tipo requerido: '+tipoReqAnticipado:'Completar con un tipo válido: '+Object.keys(MOV).join(', ')}`,
+      suggTipo);
+  }
+
+  // FECHA
+  const fechaVal=f.FECHA_VISITA_DOMICILIO||'';
+  if(!fechaVal||fechaVal.startsWith('1900'))
+    err('FECHA_VISITA_DOMICILIO','Fecha inválida o nula (no puede ser 01/01/1900)');
+
+  // NRO_MED_DOMICILIO — busca en campos del CSV original
+  const nroMedRaw=raw['NRO_MEDIDOR']||raw['NRO_MED']||raw['MEDIDOR']||raw['NRO_MED_DOM']||raw['NRO_MEDIDOR_DOM']||null;
+  if(!f.NRO_MED_DOMICILIO||isNaN(parseInt(f.NRO_MED_DOMICILIO))||parseInt(f.NRO_MED_DOMICILIO)<=0){
+    if(nroMedRaw&&parseInt(nroMedRaw)>0)
+      warn('NRO_MED_DOMICILIO','Vacío. Si hay medidor en el domicilio debe ser > 0.',nroMedRaw);
+    else
+      warn('NRO_MED_DOMICILIO','Vacío. Completar si hay medidor en el domicilio.');
+  }
+
+  // ESTADO_LINEA_DOMICILIO
+  if(!ESTADO_VALS.includes(est)){
+    const sugg=tipo&&MOV[tipo]?MOV[tipo].estado||null:null;
+    err('ESTADO_LINEA_DOMICILIO',`Estado "${est}" inválido. Válidos: ${ESTADO_VALS.join(', ')}`,sugg);
+  } else if(tipo&&MOV[tipo]&&ejec==='S'){
+    const tiposPermit=[tipo,...(MOV[tipo].otros||[])];
+    const estadosPermit=tiposPermit.map(t=>MOV[t]?.estado).filter(Boolean);
+    if(estadosPermit.length&&!estadosPermit.includes(est)){
+      warn('ESTADO_LINEA_DOMICILIO',`Para ${tipo} ejecutado se espera: ${estadosPermit.join(' o ')}`,MOV[tipo].estado||undefined);
+    }
+  }
+
+  // MEDIDOR CRUZADO (6009) → COD_MOTIVO = CA0015
+  if(cod===6009&&(!f.COD_MOTIVO||f.COD_MOTIVO.toUpperCase()!=='CA0015'))
+    err('COD_MOTIVO','Medidor cruzado (6009): COD_MOTIVO debe ser CA0015','CA0015');
+
+  // MEDIDOR DISTINTO (6008) → COD_MOTIVO = CA0064
+  if(cod===6008&&(!f.COD_MOTIVO||f.COD_MOTIVO.toUpperCase()!=='CA0064'))
+    err('COD_MOTIVO','Medidor distinto (6008): COD_MOTIVO debe ser CA0064','CA0064');
+
+  // CA / IN ejecutados → NRO_MED_INSTALA obligatorio
+  if(['CA','IN'].includes(tipo)&&ejec==='S'){
+    const medInsRaw=raw['NRO_MED_INSTALA']||raw['NRO_MEDIDOR_NUEVO']||raw['MED_NUEVO']||raw['MED_INSTALADO']||null;
+    if(!f.NRO_MED_INSTALA||isNaN(parseInt(f.NRO_MED_INSTALA))||parseInt(f.NRO_MED_INSTALA)<=0){
+      if(medInsRaw&&parseInt(medInsRaw)>0)
+        err('NRO_MED_INSTALA',`Obligatorio para ${tipo} ejecutado.`,medInsRaw);
+      else
+        err('NRO_MED_INSTALA',`Obligatorio para ${tipo} ejecutado (número > 0)`);
+    }
+    if(f.LECTURA_MED_INSTALA===''||f.LECTURA_MED_INSTALA===undefined||f.LECTURA_MED_INSTALA===null)
+      warn('LECTURA_MED_INSTALA',`Obligatorio para ${tipo} ejecutado`,'0');
+    if(f.NRO_MED_INSTALA&&f.NRO_MED_DOMICILIO&&f.NRO_MED_INSTALA===f.NRO_MED_DOMICILIO)
+      err('NRO_MED_INSTALA','NRO_MED_INSTALA no puede ser igual a NRO_MED_DOMICILIO');
+  }
+
+  // IN no ejecutado → sugerir 5010
+  if(tipo==='IN'&&ejec==='N'&&!isNaN(cod)&&cod!==5010&&cod!==2005)
+    warn('CODIGO_EJECUCION','Para IN no ejecutado se recomienda 5010 (CLIENTE AUSENTE) o 2005 (SIN REGULADOR)','5010');
+
+  // COD_MOTIVO válido para el tipo
+  if(f.COD_MOTIVO&&tipo&&COD_MOTIVO_MAP[tipo]){
+    if(!COD_MOTIVO_MAP[tipo].includes(f.COD_MOTIVO.toUpperCase()))
+      warn('COD_MOTIVO',`"${f.COD_MOTIVO}" no está en la tabla de motivos para tipo ${tipo}`);
+  }
+
+  // tipo ejecutado difiere del requerido → COD_MOTIVO obligatorio (solo si EJECUTADA=S)
+  const tipoReq=tipoReqAnticipado; // ya calculado arriba
+  if(ejec==='S'&&tipoReq&&tipo&&tipoReq!==tipo&&!f.COD_MOTIVO){
+    const sugg=COD_MOTIVO_MAP[tipo]?COD_MOTIVO_MAP[tipo][0]:null;
+    warn('COD_MOTIVO',`Trabajo ejecutado (${tipo}) difiere del requerido (${tipoReq}): COD_MOTIVO obligatorio`,sugg);
+  }
+
+  // EJECUTADA=N → TIPO_TRABAJO_EJECUTADO debe ser igual al tipo requerido (TIPO_MOV_MED)
+  // cubre tanto el caso vacío como el caso con valor distinto
+  if(ejec==='N'&&tipoReq&&(!tipo||tipoReq!==tipo)){
+    err('TIPO_TRABAJO_EJECUTADO',
+      `Cuando EJECUTADA=N el tipo debe ser igual al requerido: ${tipoReq}`,
+      tipoReq);
+  }
+
+  // EJECUTADA=N → ESTADO_LINEA_DOMICILIO debe ser igual al estado anterior (ESTADO_LINEA del CSV)
+  const estadoAnterior=(raw["ESTADO_LINEA"]||"").toUpperCase().trim();
+  if(ejec==="N"&&estadoAnterior&&ESTADO_VALS.includes(estadoAnterior)){
+    if(est!==estadoAnterior){
+      err("ESTADO_LINEA_DOMICILIO",
+        "Cuando EJECUTADA=N el estado no cambia. Debe mantener el estado anterior: "+estadoAnterior,
+        estadoAnterior);
+    }
+  }
+
+  // NRO_TARJETA_VISITA
+  // Obligatorio si: tipo_requerido=IN y (tipo_ejecutado=CS con COD_MOTIVO CS0001/2/3) O (EJECUTADA=N y COD_MOTIVO=IN0002)
+  const tipoReqTV=tipoReqAnticipado;
+  const codMotivo=(f.COD_MOTIVO||'').toUpperCase();
+  const esCS_seguridad=tipo==='CS'&&['CS0001','CS0002','CS0003'].includes(codMotivo);
+  const esIN_ausente=ejec==='N'&&codMotivo==='IN0002';
+  const tarjetaObligatoria=tipoReqTV==='IN'&&(esCS_seguridad||esIN_ausente);
+  if(tarjetaObligatoria){
+    if(!f.NRO_TARJETA_VISITA||isNaN(parseInt(f.NRO_TARJETA_VISITA))||parseInt(f.NRO_TARJETA_VISITA)<=0){
+      const suggTV=raw['NRO_TARJETA_VISITA']||raw['TARJETA_VISITA']||raw['NRO_TARJETA']||null;
+      err('NRO_TARJETA_VISITA',
+        `Obligatorio cuando tipo requerido=IN y ${esCS_seguridad?'tipo ejecutado=CS por seguridad':'cliente ausente (IN0002)'}`,
+        suggTV);
+    }
+  }
+
+  return{errors,warnings};
+}
+
+// ═══════════ DESCARGA ═══════════
+function downloadTxt(){
+  const lines=tableData.map(row=>CAMPOS.map(c=>row[c.key]||'').join(';')+';');
+  const blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=generatedFilename;a.click();URL.revokeObjectURL(url);
+}
+function resetAll(){
+  csvHeaders=[];csvRows=[];columnMapping={};tableData=[];
+  document.getElementById('drop-file-name').textContent='';
+  document.getElementById('card-mapper').classList.add('hidden');
+  document.getElementById('card-generate').classList.add('hidden');
+  document.getElementById('file-input').value='';
+  document.getElementById('cfg-fecha-display').textContent='Se detecta al cargar el CSV';
+  document.getElementById('cfg-fecha-display').style.color='var(--text-dim)';
+  document.getElementById('cfg-hora-display').textContent='Se fija al generar';
+  document.getElementById('cfg-hora-display').style.color='var(--text-dim)';
+  updateFilenamePreview();setStep(1);
+}
+
+// ═══════════ VALIDADOR TXT ═══════════
+function handleValFile(file){
+  if(!file)return;
+  document.getElementById('drop-val-name').textContent='✓ '+file.name;
+  const r=new FileReader();r.onload=e=>validateTxtFile(e.target.result,file.name);r.readAsText(file,'UTF-8');
+}
+function validateTxtFile(text,filename){
+  const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
+  const allErrors=[],allWarns=[];
+  validateFilename(filename).forEach(e=>allErrors.push({row:'Nombre',field:'FILENAME',msg:e}));
+  const body=document.getElementById('val-table-body'),head=document.getElementById('val-table-head');
+  body.innerHTML='';
+  const infoFields=getInfoFields();
+  head.innerHTML='<th style="width:32px">#</th>'+
+    infoFields.map(f=>`<th class="col-info">${f.label}</th>`).join('')+
+    CAMPOS.map(c=>`<th>${c.key}</th>`).join('')+'<th>Estado</th>';
+  lines.forEach((line,idx)=>{
+    const parts=line.replace(/;$/,'').split(';');
+    const f={};CAMPOS.forEach((c,i)=>f[c.key]=parts[i]||'');
+    const{errors,warnings}=validateRow(f,idx+1);
+    errors.forEach(e=>allErrors.push(e));warnings.forEach(w=>allWarns.push(w));
+    const rowE=errors.filter(e=>e.row===idx+1),rowW=warnings.filter(w=>w.row===idx+1);
+    const tr=document.createElement('tr');
+    const tdN=document.createElement('td');tdN.className='cell-rownum';tdN.textContent=idx+1;tr.appendChild(tdN);
+    CAMPOS.forEach((c,i)=>{
+      const td=document.createElement('td');
+      const hasE=rowE.some(e=>e.field===c.key),hasW=rowW.some(w=>w.field===c.key);
+      if(hasE){td.className='cell-err';td.setAttribute('data-tip',rowE.find(e=>e.field===c.key).msg);}
+      else if(hasW){td.className='cell-warn';td.setAttribute('data-tip',rowW.find(w=>w.field===c.key).msg);}
+      const sp=document.createElement('span');sp.className='cell-inner';sp.style.cursor='default';sp.textContent=parts[i]||'';td.appendChild(sp);tr.appendChild(td);
+    });
+    const tdS=document.createElement('td');tdS.className='cell-status';
+    tdS.innerHTML=rowE.length?'<span class="badge badge-err">ERROR</span>':rowW.length?'<span class="badge badge-warn">WARN</span>':'<span class="badge badge-ok">OK</span>';
+    tr.appendChild(tdS);body.appendChild(tr);
+  });
+  document.getElementById('val-summary').innerHTML=`
+    <div class="vs-item"><span class="vs-num">${lines.length}</span><span class="vs-label">Líneas</span></div>
+    <div class="vs-item"><span class="vs-num ${allErrors.length>0?'red':'green'}">${allErrors.length}</span><span class="vs-label">Errores</span></div>
+    <div class="vs-item"><span class="vs-num ${allWarns.length>0?'yellow':'green'}">${allWarns.length}</span><span class="vs-label">Advertencias</span></div>
+    <div class="vs-item"><span class="vs-num ${allErrors.length===0?'green':'red'}">${allErrors.length===0?'✓':'✗'}</span><span class="vs-label">${allErrors.length===0?'VÁLIDO':'CON ERRORES'}</span></div>`;
+  const errListEl=document.getElementById('val-errors-list');errListEl.innerHTML='';
+  allErrors.forEach(e=>{errListEl.innerHTML+=`<div style="background:var(--surface2);border-left:3px solid var(--red);border-radius:0 6px 6px 0;padding:8px 14px;margin-bottom:6px;font-family:var(--mono);font-size:12px;"><span style="color:var(--text-dim);font-size:11px;">Fila ${e.row} · <span style="color:var(--yellow)">${e.field}</span></span><br><span style="color:var(--red)">✗ ${e.msg}</span></div>`;});
+  document.getElementById('val-result').classList.remove('hidden');
+}
+function validateFilename(name){
+  const errs=[],upper=name.toUpperCase();
+  if(!upper.endsWith('.TXT'))errs.push('Extensión debe ser .TXT');
+  if(!upper.startsWith('RETOML'))errs.push('Debe comenzar con RETOML');
+  const parts=name.replace(/\.TXT$/i,'').split('_');
+  if(parts.length<4||parts.length>5)errs.push(`Debe tener 4 o 5 segmentos separados por _ (tiene ${parts.length})`);
+  else{
+    if(!['NORTENERGY','SERYTEC'].includes(parts[1].toUpperCase()))errs.push(`Contratista "${parts[1]}" inválido. Debe ser NORTENERGY o SERYTEC`);
+    if(!/^\d{8}$/.test(parts[2]))errs.push(`Fecha "${parts[2]}" inválida. Formato YYYYMMDD`);
+    if(!/^\d{6}$/.test(parts[3]))errs.push(`Hora "${parts[3]}" inválida. Formato HHMMSS`);
+    if(parts[4]!==undefined&&!/^\d{5}$/.test(parts[4]))errs.push(`NRO_LOTE "${parts[4]}" inválido. Debe ser 5 dígitos`);
+  }
+  return errs;
+}
+
+// ═══════════ REFERENCIA ═══════════
+function buildReferenceTab(){
+  const descs={NRO_SUC_PTO_VTA:'PK parte 1',NRO_ASIG_OML_CONT:'PK parte 2',NRO_DET_ASIG_OML_CONT:'PK parte 3',EJECUTADA:'S=ejecutado / N=no ejecutado',CODIGO_EJECUCION:'Alias CSV: CODIGO_CIERRE_OML',OBSERVACIONES_CIERRE_OML:'Texto libre (max 255)',TIPO_TRABAJO_EJECUTADO:'Alias CSV: TIPO_MOV_MED',FECHA_VISITA_DOMICILIO:'Alias CSV: FECHA_CIERRE_OML. No puede ser 01/01/1900',NRO_MED_DOMICILIO:'Medidor en domicilio (null si no hay medidor)',LECTURA_MED_DOMICILIO:'Lectura medidor domicilio',ESTADO_LINEA_DOMICILIO:'Ver tabla de movimientos',COD_MOTIVO:'Ver tabla de motivos por tipo mov',NRO_MED_INSTALA:'Obligatorio si CA o IN ejecutado',LECTURA_MED_INSTALA:'Obligatorio si CA o IN ejecutado'};
+  const tipos={NRO_SUC_PTO_VTA:'INTEGER',NRO_ASIG_OML_CONT:'INTEGER',NRO_DET_ASIG_OML_CONT:'INTEGER',EJECUTADA:'CHAR(1)',CODIGO_EJECUCION:'NUMBER(6)',OBSERVACIONES_CIERRE_OML:'VARCHAR2(255)',TIPO_TRABAJO_EJECUTADO:'CHAR(2)',FECHA_VISITA_DOMICILIO:'DATE',NRO_MED_DOMICILIO:'INTEGER',LECTURA_MED_DOMICILIO:'INTEGER',ESTADO_LINEA_DOMICILIO:'CHAR(3)',COD_MOTIVO:'VARCHAR(6)',NRO_MED_INSTALA:'INTEGER',LECTURA_MED_INSTALA:'INTEGER'};
+  const vals={EJECUTADA:'S / N',TIPO_TRABAJO_EJECUTADO:'CA CF CP CS IN RE VF VL',ESTADO_LINEA_DOMICILIO:'CAP CFP CPS NOR REH RET RIN SIN'};
+  const ft=document.getElementById('ref-fields-table');
+  CAMPOS.forEach((c,i)=>{ft.innerHTML+=`<tr><td>${i+1}</td><td style="font-family:var(--mono);color:var(--accent)">${c.key}</td><td style="color:var(--text-dim)">${tipos[c.key]||'—'}</td><td>${c.nullable?'SÍ':'NO'}</td><td style="color:var(--text-dim);font-size:10px">${vals[c.key]||'—'}</td><td style="color:var(--text-dim)">${descs[c.key]||''}</td></tr>`;});
+  const mt=document.getElementById('ref-mov-table');
+  Object.entries(MOV).forEach(([k,v])=>{mt.innerHTML+=`<tr><td style="font-family:var(--mono);color:var(--accent)">${k}</td><td>${v.desc}</td><td>${v.otros.length?v.otros.join(', '):'—'}</td><td style="font-family:var(--mono)">${v.estado||'—'}</td></tr>`;});
+  const nt=document.getElementById('ref-noejec-table');
+  Object.entries(NOEJEC).forEach(([k,v])=>{nt.innerHTML+=`<tr><td style="font-family:var(--mono);color:var(--yellow)">${k}</td><td>${v}</td></tr>`;});
+  const et=document.getElementById('ref-ejec-table');
+  Object.entries(EJEC).forEach(([k,v])=>{et.innerHTML+=`<tr><td style="font-family:var(--mono);color:var(--green)">${k}</td><td>${v}</td></tr>`;});
+  const moTbl=document.getElementById('ref-motivo-table');
+  Object.entries(MOTIVO_DESC).forEach(([k,v])=>{
+    const tipoMatch=k.match(/^([A-Z]+)/);const tipo=tipoMatch?tipoMatch[1]:'';
+    moTbl.innerHTML+=`<tr><td style="font-family:var(--mono);color:var(--accent)">${tipo}</td><td>${v}</td><td style="font-family:var(--mono);color:var(--yellow)">${k}</td></tr>`;
+  });
+}
+</script>
+</body>
+</html>
