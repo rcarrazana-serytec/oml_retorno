@@ -732,6 +732,7 @@ function closeDropdown(){if(activeDropdown){activeDropdown.remove();activeDropdo
 const INFO_FIELD_CANDIDATES=[
   {key:'NRO_ORD_MOV_MED', aliases:['NRO_ORD_MOV_MED','NRO_OML','NRO_ORDEN','ORDEN_MOV','ID_OML','NRO_TAREA'], label:'NRO OML'},
   {key:'TIPO_MOV_MED',     aliases:['TIPO_MOV_MED','TIPO_MOV_REQUERIDO','TIPO_TRABAJO_REQUERIDO','TIPO_MOV'], label:'TIPO REQUERIDO'},
+  {key:'ESTADO_LINEA',     aliases:['ESTADO_LINEA','ESTADO_ANT','ESTADO_ANTERIOR','ESTADO_DOM','ESTADO_DOMICILIO'], label:'ESTADO ANTERIOR'},
 ];
 function getInfoFields(){
   if(!csvHeaders||!csvHeaders.length)return[];
