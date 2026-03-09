@@ -423,14 +423,41 @@ function handleFile(file){
   document.getElementById('drop-file-name').textContent='✓ '+file.name;
   const r=new FileReader();r.onload=e=>parseCSV(e.target.result);r.readAsText(file,'UTF-8');
 }
+function parseCSVLine(line, sep){
+  // Parser robusto: respeta campos entre comillas que contienen el separador
+  const result=[];
+  let cur='', inQuotes=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){
+      if(inQuotes&&line[i+1]==='"'){cur+='"';i++;} // comilla escapada ""
+      else inQuotes=!inQuotes;
+    } else if(ch===sep&&!inQuotes){
+      result.push(cur.trim());cur='';
+    } else {
+      cur+=ch;
+    }
+  }
+  result.push(cur.trim());
+  return result;
+}
+function detectSep(line){
+  // Contar separadores fuera de comillas
+  let sc=0,cc=0,inQ=false;
+  for(let i=0;i<line.length;i++){
+    if(line[i]==='"')inQ=!inQ;
+    else if(!inQ){if(line[i]===';')sc++;else if(line[i]===',')cc++;}
+  }
+  return sc>cc?';':',';
+}
 function parseCSV(text){
   const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
   if(lines.length<2){alert('El CSV necesita encabezado + datos.');return;}
   const fl=lines[0].replace(/^\uFEFF/,'');
-  const sep=fl.split(';').length>fl.split(',').length?';':',';
-  csvHeaders=fl.split(sep).map(h=>h.trim().replace(/^"|"$/g,''));
+  const sep=detectSep(fl);
+  csvHeaders=parseCSVLine(fl,sep).map(h=>h.replace(/^"|"$/g,'').trim());
   csvRows=lines.slice(1).map(l=>{
-    const vals=l.split(sep).map(v=>v.trim().replace(/^"|"$/g,''));
+    const vals=parseCSVLine(l,sep).map(v=>v.replace(/^"|"$/g,'').trim());
     const obj={};csvHeaders.forEach((h,i)=>obj[h]=vals[i]||'');return obj;
   });
   buildMapper();setStep(3);
