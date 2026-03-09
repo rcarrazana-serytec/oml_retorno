@@ -661,8 +661,8 @@ function revalidateRow(tr,ri){
     const oldSb=td.querySelector('.suggest-btn');if(oldSb)oldSb.remove();
     const span=td.querySelector('.cell-inner');
     const isFixed=PK_FIELDS.includes(campo.key);
-    // actualizar editabilidad según nuevo estado
-    if(span){
+    // actualizar editabilidad según nuevo estado — sin tocar si tiene el foco activo
+    if(span&&span!==document.activeElement){
       if(!isFixed&&v){
         span.contentEditable='true';span.style.cursor='';
       } else {
@@ -820,10 +820,23 @@ Verificar si EJECUTADA debería ser N con CODIGO_EJECUCION=${obsMatch.cod}.`
     const sugg=tipo&&MOV[tipo]?MOV[tipo].estado||null:null;
     err('ESTADO_LINEA_DOMICILIO',`Estado "${est}" inválido. Válidos: ${ESTADO_VALS.join(', ')}`,sugg);
   } else if(tipo&&MOV[tipo]&&ejec==='S'){
-    const tiposPermit=[tipo,...(MOV[tipo].otros||[])];
-    const estadosPermit=tiposPermit.map(t=>MOV[t]?.estado).filter(Boolean);
-    if(estadosPermit.length&&!estadosPermit.includes(est)){
-      warn('ESTADO_LINEA_DOMICILIO',`Para ${tipo} ejecutado se espera: ${estadosPermit.join(' o ')}`,MOV[tipo].estado||undefined);
+    // VF y VL no tienen estado fijo — el estado depende del trabajo derivado ejecutado
+    // Solo validar si el tipo tiene un estado esperado definido
+    const esVerificacion=['VF','VL'].includes(tipo);
+    if(!esVerificacion){
+      const tiposPermit=[tipo,...(MOV[tipo].otros||[])];
+      const estadosPermit=tiposPermit.map(t=>MOV[t]?.estado).filter(Boolean);
+      if(estadosPermit.length&&!estadosPermit.includes(est)){
+        warn('ESTADO_LINEA_DOMICILIO',`Para ${tipo} ejecutado se espera: ${estadosPermit.join(' o ')}`,MOV[tipo].estado||undefined);
+      }
+    }
+    // Para VF/VL: si el trabajo derivado es CA/CS/RE, validar que el estado coincida con ese derivado
+    if(esVerificacion){
+      const tipoEjecutadoReal=tipo; // el tipo_trabajo_ejecutado ya puede ser CA, CS o RE
+      // Si ejecutó CA, CS o RE como derivado de VF/VL, el estado debe coincidir con ese derivado
+      if(['CA','CS','RE'].includes(tipo)&&MOV[tipo]?.estado&&est!==MOV[tipo].estado){
+        warn('ESTADO_LINEA_DOMICILIO',`Trabajo ejecutado ${tipo} → estado esperado: ${MOV[tipo].estado}`,MOV[tipo].estado);
+      }
     }
   }
 
