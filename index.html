@@ -106,6 +106,49 @@
   .filter-btn.f-warn.active .filter-count{background:rgba(0,0,0,0.15);}
   .filter-btn.f-ok.active .filter-count{background:rgba(0,0,0,0.15);}
   .empty-section{text-align:center;padding:36px;font-family:var(--mono);font-size:13px;color:var(--text-dimmer);}
+  /* botón instrucciones */
+  .tab-help{margin-left:auto;background:rgba(79,156,249,0.12)!important;color:var(--blue)!important;border-color:rgba(79,156,249,0.3)!important;}
+  .tab-help:hover{background:rgba(79,156,249,0.25)!important;}
+
+  /* modal instrucciones */
+  #modal-instrucciones{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);overflow-y:auto;padding:32px 16px;}
+  #modal-instrucciones.open{display:flex;align-items:flex-start;justify-content:center;}
+  .modal-box{background:#16181f;border:1px solid var(--border);border-radius:14px;max-width:860px;width:100%;padding:0;overflow:hidden;position:relative;}
+  .modal-header{background:linear-gradient(135deg,#1a2035,#0e1525);padding:28px 36px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;}
+  .modal-header-icon{font-size:32px;}
+  .modal-header-text h2{font-family:var(--mono);font-size:18px;color:var(--blue);margin:0 0 4px;}
+  .modal-header-text p{font-size:13px;color:var(--text-dim);margin:0;}
+  .modal-close{position:absolute;top:16px;right:20px;background:none;border:none;color:var(--text-dim);font-size:22px;cursor:pointer;padding:4px 8px;border-radius:6px;}
+  .modal-close:hover{color:var(--text);background:var(--surface2);}
+  .modal-body{padding:32px 36px;}
+  .inst-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px;}
+  .inst-nav-btn{background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--text-dim);font-family:var(--mono);font-size:11px;padding:6px 16px;cursor:pointer;transition:all .2s;}
+  .inst-nav-btn.active,.inst-nav-btn:hover{background:rgba(79,156,249,0.15);border-color:rgba(79,156,249,0.4);color:var(--blue);}
+  .inst-section{display:none;}
+  .inst-section.active{display:block;}
+  .inst-section h3{font-family:var(--mono);font-size:14px;color:var(--blue);border-bottom:1px solid var(--border);padding-bottom:8px;margin:0 0 20px;}
+  .inst-step{display:flex;gap:16px;margin-bottom:20px;align-items:flex-start;}
+  .inst-step-num{background:var(--blue);color:#fff;font-family:var(--mono);font-size:13px;font-weight:700;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+  .inst-step-body h4{font-size:14px;color:var(--text);margin:0 0 6px;}
+  .inst-step-body p{font-size:13px;color:var(--text-dim);margin:0;line-height:1.6;}
+  .inst-tip{background:rgba(79,156,249,0.08);border-left:3px solid var(--blue);border-radius:0 6px 6px 0;padding:10px 14px;margin:12px 0;font-size:12px;color:var(--text-dim);}
+  .inst-tip strong{color:var(--blue);}
+  .inst-warn{background:rgba(255,193,7,0.08);border-left:3px solid var(--yellow);border-radius:0 6px 6px 0;padding:10px 14px;margin:12px 0;font-size:12px;color:var(--text-dim);}
+  .inst-warn strong{color:var(--yellow);}
+  .inst-err{background:rgba(255,90,90,0.08);border-left:3px solid var(--red);border-radius:0 6px 6px 0;padding:10px 14px;margin:12px 0;font-size:12px;color:var(--text-dim);}
+  .inst-err strong{color:var(--red);}
+  .inst-ok{background:rgba(62,207,142,0.08);border-left:3px solid var(--green);border-radius:0 6px 6px 0;padding:10px 14px;margin:12px 0;font-size:12px;color:var(--text-dim);}
+  .inst-ok strong{color:var(--green);}
+  .campo-tabla{width:100%;border-collapse:collapse;font-size:12px;margin:12px 0;}
+  .campo-tabla th{background:var(--surface2);color:var(--text-dim);font-family:var(--mono);font-size:11px;text-transform:uppercase;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);}
+  .campo-tabla td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.05);color:var(--text);vertical-align:top;}
+  .campo-tabla tr:hover td{background:var(--surface2);}
+  .badge-campo{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:4px;font-family:var(--mono);font-size:10px;padding:2px 7px;color:var(--blue);}
+  .cod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin:12px 0;}
+  .cod-item{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;display:flex;gap:10px;align-items:flex-start;}
+  .cod-key{font-family:var(--mono);font-size:12px;color:var(--yellow);flex-shrink:0;min-width:44px;}
+  .cod-desc{font-size:12px;color:var(--text-dim);}
+
   /* columnas informativas — solo vista, no se exportan */
   th.col-info{color:var(--text-dimmer);font-style:italic;border-right:2px solid var(--border-bright);}
   th.col-info::after{content:' ℹ';font-size:9px;}
@@ -133,6 +176,7 @@
     <button class="tab active" onclick="switchTab('generar',this)">01 · GENERAR</button>
     <button class="tab" onclick="switchTab('validar',this)">02 · VALIDAR TXT</button>
     <button class="tab" onclick="switchTab('referencia',this)">03 · REFERENCIA</button>
+    <button class="tab tab-help" onclick="openInstrucciones()">📖 INSTRUCCIONES</button>
   </div>
 
   <!-- ═══ TAB GENERAR ═══ -->
@@ -942,6 +986,29 @@ function downloadTxt(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=generatedFilename;a.click();URL.revokeObjectURL(url);
 }
+function openInstrucciones(){
+  document.getElementById('modal-instrucciones').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeInstrucciones(){
+  document.getElementById('modal-instrucciones').classList.remove('open');
+  document.body.style.overflow='';
+}
+function showInstSection(id,btn){
+  document.querySelectorAll('.inst-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.inst-nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('inst-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+// Cerrar modal al click fuera del box
+document.addEventListener('click',function(e){
+  const modal=document.getElementById('modal-instrucciones');
+  if(e.target===modal)closeInstrucciones();
+});
+// Cerrar con Escape
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape')closeInstrucciones();
+});
 function resetAll(){
   csvHeaders=[];csvRows=[];columnMapping={};tableData=[];
   document.getElementById('drop-file-name').textContent='';
@@ -1034,5 +1101,239 @@ function buildReferenceTab(){
   });
 }
 </script>
+
+<!-- ═══════════════════ MODAL INSTRUCCIONES ═══════════════════ -->
+<div id="modal-instrucciones">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeInstrucciones()">✕</button>
+    <div class="modal-header">
+      <div class="modal-header-icon">📖</div>
+      <div class="modal-header-text">
+        <h2>INSTRUCTIVO — GENERADOR RETOML</h2>
+        <p>SERYTEC · Cliente Naturgy NOA · Para uso interno del personal de control</p>
+      </div>
+    </div>
+    <div class="modal-body">
+
+      <!-- Nav interno -->
+      <div class="inst-nav">
+        <button class="inst-nav-btn active" onclick="showInstSection('paso-a-paso',this)">① Paso a paso</button>
+        <button class="inst-nav-btn" onclick="showInstSection('campos',this)">② Qué es cada campo</button>
+        <button class="inst-nav-btn" onclick="showInstSection('errores',this)">③ Errores y advertencias</button>
+        <button class="inst-nav-btn" onclick="showInstSection('codigos',this)">④ Tabla de códigos</button>
+      </div>
+
+      <!-- SECCIÓN 1: PASO A PASO -->
+      <div class="inst-section active" id="inst-paso-a-paso">
+        <h3>📋 PASO A PASO — CÓMO USAR LA APLICACIÓN</h3>
+
+        <div class="inst-step">
+          <div class="inst-step-num">1</div>
+          <div class="inst-step-body">
+            <h4>Configurar el lote (opcional)</h4>
+            <p>Si la exportación corresponde a un lote numerado, ingresá el número en el campo <strong>NRO LOTE</strong> antes de cargar el archivo. Podés dejar este campo vacío si no aplica. El número se agrega automáticamente al nombre del archivo (ej: RETOML_SERYTEC_20260306_115053_<strong>00001</strong>.TXT).</p>
+          </div>
+        </div>
+
+        <div class="inst-step">
+          <div class="inst-step-num">2</div>
+          <div class="inst-step-body">
+            <h4>Cargar el archivo CSV de Survey123</h4>
+            <p>Hacé click en el área de carga (o arrastrá el archivo) y seleccioná el CSV exportado desde Survey123. El sistema detecta automáticamente el separador (coma o punto y coma) y lee todas las columnas.</p>
+            <div class="inst-tip"><strong>💡 Tip:</strong> El archivo CSV viene directamente de la descarga de Survey123. No lo editás antes de subirlo.</div>
+          </div>
+        </div>
+
+        <div class="inst-step">
+          <div class="inst-step-num">3</div>
+          <div class="inst-step-body">
+            <h4>Verificar el mapeo de columnas</h4>
+            <p>La aplicación detecta automáticamente las columnas del CSV. Si una columna no se reconoce, aparece un selector para asignarla manualmente. En general no es necesario cambiar nada.</p>
+            <div class="inst-tip"><strong>💡 Tip:</strong> Si el CSV tiene las columnas habituales de Survey123, el mapeo es automático al 100%.</div>
+          </div>
+        </div>
+
+        <div class="inst-step">
+          <div class="inst-step-num">4</div>
+          <div class="inst-step-body">
+            <h4>Generar y revisar la tabla</h4>
+            <p>Hacé click en <strong>GENERAR TABLA</strong>. Se muestra una tabla con todas las órdenes. Cada fila tiene un color según su estado:</p>
+            <div class="inst-err"><strong>🔴 Rojo = ERROR</strong> — El campo tiene un valor incorrecto o falta un dato obligatorio. No se puede exportar sin corregirlo.</div>
+            <div class="inst-warn"><strong>🟡 Amarillo = ADVERTENCIA</strong> — El valor es sospechoso o podría estar mal. Hay que revisarlo.</div>
+            <div class="inst-ok"><strong>🟢 Verde = OK</strong> — Todo correcto, no requiere acción.</div>
+          </div>
+        </div>
+
+        <div class="inst-step">
+          <div class="inst-step-num">5</div>
+          <div class="inst-step-body">
+            <h4>Corregir los errores</h4>
+            <p>Hacé click en una celda roja o amarilla para editarla. Si hay una sugerencia disponible, aparece un botón azul <strong>→ valor</strong> que aplicás con un click. Una vez corregida, la celda se pone verde y se bloquea.</p>
+            <div class="inst-tip"><strong>💡 Tip:</strong> Usá los filtros <strong>✗ Errores</strong> y <strong>⚠ Advertencias</strong> para ver sólo las filas que necesitan atención.</div>
+          </div>
+        </div>
+
+        <div class="inst-step">
+          <div class="inst-step-num">6</div>
+          <div class="inst-step-body">
+            <h4>Descargar el archivo TXT</h4>
+            <p>Cuando hayas revisado todas las filas, hacé click en <strong>⬇ DESCARGAR TXT</strong>. El archivo se guarda automáticamente con el nombre <strong>RETOML_SERYTEC_YYYYMMDD_HHMMSS.TXT</strong> listo para enviar a Naturgy.</p>
+            <div class="inst-warn"><strong>⚠ Importante:</strong> El TXT se exporta con TODAS las filas, incluso las que tengan advertencias. Revisá bien antes de descargar.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN 2: CAMPOS -->
+      <div class="inst-section" id="inst-campos">
+        <h3>🗂 QUÉ SIGNIFICA CADA CAMPO</h3>
+        <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;">Las primeras columnas de la tabla (en <em>cursiva con fondo azulado</em>) son solo informativas — vienen del CSV para ayudarte a controlar pero <strong>no se exportan</strong> al TXT.</p>
+
+        <table class="campo-tabla">
+          <thead><tr><th>#</th><th>Campo</th><th>Qué es</th><th>Valores posibles</th></tr></thead>
+          <tbody>
+            <tr><td>INFO</td><td><span class="badge-campo">NRO OML</span></td><td>Número de orden de movilidad. Solo para referencia visual.</td><td>—</td></tr>
+            <tr><td>INFO</td><td><span class="badge-campo">TIPO REQUERIDO</span></td><td>Tipo de trabajo que pedía la orden original.</td><td>CA IN CF CP CS RE VF VL</td></tr>
+            <tr><td>INFO</td><td><span class="badge-campo">ESTADO ANTERIOR</span></td><td>Estado de la línea antes de la intervención. Útil para completar ESTADO_LINEA_DOMICILIO.</td><td>NOR RIN RET CFP CAP CPS REH SIN</td></tr>
+            <tr><td>1</td><td><span class="badge-campo">NRO_SUC_PTO_VTA</span></td><td>Número de sucursal/punto de venta. Viene del CSV.</td><td>Número entero &gt; 0</td></tr>
+            <tr><td>2</td><td><span class="badge-campo">NRO_ASIG_OML_CONT</span></td><td>Número de asignación de la OML al contratista.</td><td>Número entero &gt; 0</td></tr>
+            <tr><td>3</td><td><span class="badge-campo">NRO_DET_ASIG_OML_CONT</span></td><td>Número de detalle de la asignación.</td><td>Número entero &gt; 0</td></tr>
+            <tr><td>4</td><td><span class="badge-campo">EJECUTADA</span></td><td>¿Se realizó el trabajo?</td><td><strong>S</strong> = Sí se hizo · <strong>N</strong> = No se hizo</td></tr>
+            <tr><td>5</td><td><span class="badge-campo">CODIGO_EJECUCION</span></td><td>Código del resultado del trabajo.</td><td>1001 (ejecutado) · 2004-9001 (no ejecutado). Ver tabla de códigos.</td></tr>
+            <tr><td>6</td><td><span class="badge-campo">OBSERVACIONES</span></td><td>Texto libre con el detalle de lo que ocurrió en el domicilio.</td><td>Texto (máx. 255 caracteres)</td></tr>
+            <tr><td>7</td><td><span class="badge-campo">TIPO_TRABAJO_EJECUTADO</span></td><td>Tipo de trabajo que realmente se realizó. Si no se ejecutó, debe coincidir con el tipo requerido.</td><td>CA CF CP CS IN RE VF VL</td></tr>
+            <tr><td>8</td><td><span class="badge-campo">FECHA_VISITA_DOMICILIO</span></td><td>Fecha en que se realizó la visita.</td><td>Formato dd/mm/aaaa · No puede ser 01/01/1900</td></tr>
+            <tr><td>9</td><td><span class="badge-campo">NRO_MED_DOMICILIO</span></td><td>Número del medidor que había en el domicilio al momento de la visita.</td><td>Número entero (vacío si no hay medidor)</td></tr>
+            <tr><td>10</td><td><span class="badge-campo">LECTURA_MED_DOMICILIO</span></td><td>Lectura del medidor del domicilio al momento de la visita.</td><td>Número entero</td></tr>
+            <tr><td>11</td><td><span class="badge-campo">ESTADO_LINEA_DOMICILIO</span></td><td>Estado en que quedó la línea después de la visita.</td><td>NOR RIN RET CFP CAP CPS REH SIN</td></tr>
+            <tr><td>12</td><td><span class="badge-campo">COD_MOTIVO</span></td><td>Código que explica el motivo del resultado (especialmente en no ejecutados).</td><td>Ej: IN0002, CA0015. Ver tabla de códigos.</td></tr>
+            <tr><td>13</td><td><span class="badge-campo">NRO_MED_INSTALA</span></td><td>Número del medidor nuevo que se instaló. Obligatorio en CA e IN ejecutados.</td><td>Número entero</td></tr>
+            <tr><td>14</td><td><span class="badge-campo">LECTURA_MED_INSTALA</span></td><td>Lectura inicial del medidor instalado.</td><td>Número entero</td></tr>
+            <tr><td>15</td><td><span class="badge-campo">NRO_TARJETA_VISITA</span></td><td>Número de tarjeta dejada al cliente ausente.</td><td>Número entero (obligatorio si cliente ausente IN0002)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SECCIÓN 3: ERRORES -->
+      <div class="inst-section" id="inst-errores">
+        <h3>🔧 CÓMO CORREGIR ERRORES Y ADVERTENCIAS</h3>
+
+        <div class="inst-err" style="margin-bottom:20px;"><strong>🔴 ERRORES (rojo)</strong> — Son obligatorios de corregir. El sistema los detecta automáticamente.</div>
+
+        <table class="campo-tabla">
+          <thead><tr><th>Error frecuente</th><th>Causa</th><th>Cómo corregirlo</th></tr></thead>
+          <tbody>
+            <tr><td>EJECUTADA vacío o inválido</td><td>El campo solo acepta S o N</td><td>Hacé click → seleccioná S o N del desplegable</td></tr>
+            <tr><td>CODIGO_EJECUCION no válido</td><td>El código no está en la lista permitida</td><td>Hacé click → elegí del desplegable filtrado por S/N</td></tr>
+            <tr><td>TIPO_TRABAJO inválido</td><td>El tipo no coincide con los permitidos</td><td>El sistema sugiere el tipo del CSV original → click en → valor</td></tr>
+            <tr><td>TIPO_TRABAJO ≠ TIPO REQUERIDO (EJECUTADA=N)</td><td>Si no se ejecutó, el tipo debe ser igual al requerido</td><td>Aplicá la sugerencia automática → valor</td></tr>
+            <tr><td>FECHA inválida o 01/01/1900</td><td>Fecha incorrecta en el CSV</td><td>Corregir manualmente en formato dd/mm/aaaa</td></tr>
+            <tr><td>NRO_MED_INSTALA vacío (CA o IN ejecutado)</td><td>En cambio/instalación ejecutada es obligatorio</td><td>Ingresar el número del medidor instalado</td></tr>
+            <tr><td>COD_MOTIVO obligatorio (EJECUTADA=N)</td><td>Si no se ejecutó, debe indicarse el motivo</td><td>Hacé click → elegí del desplegable filtrado por tipo</td></tr>
+            <tr><td>COD_MOTIVO = CA0015 (cód. 6009)</td><td>Medidor cruzado requiere este motivo específico</td><td>El sistema lo sugiere automáticamente</td></tr>
+          </tbody>
+        </table>
+
+        <div class="inst-warn" style="margin:20px 0 12px;"><strong>🟡 ADVERTENCIAS (amarillo)</strong> — Revisar y decidir si corresponde corregir.</div>
+
+        <table class="campo-tabla">
+          <thead><tr><th>Advertencia frecuente</th><th>Qué significa</th><th>Qué hacer</th></tr></thead>
+          <tbody>
+            <tr><td>NRO_MED_DOMICILIO vacío</td><td>No hay medidor registrado en domicilio</td><td>Verificar si el domicilio tiene medidor. Si no, dejar vacío.</td></tr>
+            <tr><td>ESTADO_LINEA no coincide con tipo ejecutado</td><td>El estado esperado difiere del ingresado</td><td>Revisar con la columna ESTADO ANTERIOR y el tipo de trabajo</td></tr>
+            <tr><td>TIPO_TRABAJO ≠ TIPO REQUERIDO (EJECUTADA=S)</td><td>Se ejecutó un trabajo diferente al requerido</td><td>Verificar si es correcto. Si cambió el trabajo, agregar COD_MOTIVO.</td></tr>
+            <tr><td>Observación sospechosa</td><td>El texto de observaciones menciona palabras que indican no ejecución</td><td>Verificar si EJECUTADA debería ser N en vez de S</td></tr>
+            <tr><td>LECTURA_MED_INSTALA vacío (CA o IN)</td><td>Falta la lectura inicial del medidor instalado</td><td>Ingresar 0 si la lectura inicial es cero</td></tr>
+          </tbody>
+        </table>
+
+        <div class="inst-tip"><strong>💡 Tip de flujo de trabajo:</strong> Primero filtrá por <strong>✗ Errores</strong> y corregilos todos. Luego filtrá por <strong>⚠ Advertencias</strong> y revisá caso por caso. Finalmente chequeá que el contador de <strong>✓ OK</strong> sea el esperado antes de descargar.</div>
+      </div>
+
+      <!-- SECCIÓN 4: CÓDIGOS -->
+      <div class="inst-section" id="inst-codigos">
+        <h3>📊 TABLA DE CÓDIGOS DE REFERENCIA</h3>
+
+        <h4 style="font-size:13px;color:var(--text);margin:0 0 10px;">Tipos de trabajo</h4>
+        <div class="cod-grid">
+          <div class="cod-item"><span class="cod-key">CA</span><span class="cod-desc">Cambio de medidor</span></div>
+          <div class="cod-item"><span class="cod-key">IN</span><span class="cod-desc">Instalación de medidor</span></div>
+          <div class="cod-item"><span class="cod-key">CF</span><span class="cod-desc">Cierre por falta de pago</span></div>
+          <div class="cod-item"><span class="cod-key">CP</span><span class="cod-desc">Cierre a pedido del cliente</span></div>
+          <div class="cod-item"><span class="cod-key">CS</span><span class="cod-desc">Cierre por seguridad</span></div>
+          <div class="cod-item"><span class="cod-key">RE</span><span class="cod-desc">Retiro de medidor</span></div>
+          <div class="cod-item"><span class="cod-key">VF</span><span class="cod-desc">Verificación de funcionamiento</span></div>
+          <div class="cod-item"><span class="cod-key">VL</span><span class="cod-desc">Verificación de lectura</span></div>
+        </div>
+
+        <h4 style="font-size:13px;color:var(--text);margin:16px 0 10px;">Estados de línea</h4>
+        <div class="cod-grid">
+          <div class="cod-item"><span class="cod-key">NOR</span><span class="cod-desc">Normal — servicio activo sin novedad</span></div>
+          <div class="cod-item"><span class="cod-key">RIN</span><span class="cod-desc">Reinstalado — medidor nuevo instalado</span></div>
+          <div class="cod-item"><span class="cod-key">RET</span><span class="cod-desc">Retirado — medidor quitado</span></div>
+          <div class="cod-item"><span class="cod-key">CFP</span><span class="cod-desc">Cerrado por falta de pago</span></div>
+          <div class="cod-item"><span class="cod-key">CAP</span><span class="cod-desc">Cerrado a pedido del cliente</span></div>
+          <div class="cod-item"><span class="cod-key">CPS</span><span class="cod-desc">Cerrado por seguridad</span></div>
+          <div class="cod-item"><span class="cod-key">REH</span><span class="cod-desc">Rehabilitado</span></div>
+          <div class="cod-item"><span class="cod-key">SIN</span><span class="cod-desc">Sin medidor</span></div>
+        </div>
+
+        <h4 style="font-size:13px;color:var(--text);margin:16px 0 10px;">Códigos de ejecución — EJECUTADA = S</h4>
+        <div class="cod-grid">
+          <div class="cod-item"><span class="cod-key">1001</span><span class="cod-desc">Trabajo realizado correctamente</span></div>
+          <div class="cod-item"><span class="cod-key">1000</span><span class="cod-desc">Realizado con artefactos clausurados</span></div>
+        </div>
+
+        <h4 style="font-size:13px;color:var(--text);margin:16px 0 10px;">Códigos de ejecución — EJECUTADA = N (no ejecutado)</h4>
+        <div class="cod-grid">
+          <div class="cod-item"><span class="cod-key">2004</span><span class="cod-desc">Puerta de nicho soldada</span></div>
+          <div class="cod-item"><span class="cod-key">2005</span><span class="cod-desc">Sin regulador</span></div>
+          <div class="cod-item"><span class="cod-key">2006</span><span class="cod-desc">Medidor interno</span></div>
+          <div class="cod-item"><span class="cod-key">2007</span><span class="cod-desc">Gabinete con candado</span></div>
+          <div class="cod-item"><span class="cod-key">2008</span><span class="cod-desc">Puerta de nicho atornillada</span></div>
+          <div class="cod-item"><span class="cod-key">2009</span><span class="cod-desc">Nicho obstruido</span></div>
+          <div class="cod-item"><span class="cod-key">2010</span><span class="cod-desc">Gabinete con rejas</span></div>
+          <div class="cod-item"><span class="cod-key">3001</span><span class="cod-desc">Entes oficiales</span></div>
+          <div class="cod-item"><span class="cod-key">3004</span><span class="cod-desc">Comedor comunitario</span></div>
+          <div class="cod-item"><span class="cod-key">3012</span><span class="cod-desc">Cliente con pago a cuenta</span></div>
+          <div class="cod-item"><span class="cod-key">3014</span><span class="cod-desc">Boleta abonada</span></div>
+          <div class="cod-item"><span class="cod-key">5008</span><span class="cod-desc">Oposición del cliente</span></div>
+          <div class="cod-item"><span class="cod-key">5009</span><span class="cod-desc">No se permitió el ingreso</span></div>
+          <div class="cod-item"><span class="cod-key">5010</span><span class="cod-desc">Cliente ausente</span></div>
+          <div class="cod-item"><span class="cod-key">6005</span><span class="cod-desc">Cambio de titularidad</span></div>
+          <div class="cod-item"><span class="cod-key">6006</span><span class="cod-desc">Retirado sin confirmación</span></div>
+          <div class="cod-item"><span class="cod-key">6007</span><span class="cod-desc">No se ubica en el domicilio</span></div>
+          <div class="cod-item"><span class="cod-key">6008</span><span class="cod-desc">Difiere medidor</span></div>
+          <div class="cod-item"><span class="cod-key">6009</span><span class="cod-desc">Medidor cruzado</span></div>
+          <div class="cod-item"><span class="cod-key">6010</span><span class="cod-desc">Llave contra la pared</span></div>
+          <div class="cod-item"><span class="cod-key">6011</span><span class="cod-desc">Llave rota</span></div>
+          <div class="cod-item"><span class="cod-key">6012</span><span class="cod-desc">Gabinete con tela metálica</span></div>
+          <div class="cod-item"><span class="cod-key">6013</span><span class="cod-desc">Cliente sin medidor</span></div>
+          <div class="cod-item"><span class="cod-key">6014</span><span class="cod-desc">Mantiene estado - cepo roto</span></div>
+          <div class="cod-item"><span class="cod-key">8004</span><span class="cod-desc">Sin visitar domicilio</span></div>
+          <div class="cod-item"><span class="cod-key">8005</span><span class="cod-desc">Inclemencia del tiempo</span></div>
+          <div class="cod-item"><span class="cod-key">8006</span><span class="cod-desc">Cierre anulado por Gasnor</span></div>
+          <div class="cod-item"><span class="cod-key">9001</span><span class="cod-desc">Movimiento no ejecutado</span></div>
+        </div>
+
+        <h4 style="font-size:13px;color:var(--text);margin:16px 0 10px;">Códigos de motivo más usados</h4>
+        <div class="cod-grid">
+          <div class="cod-item"><span class="cod-key">IN0002</span><span class="cod-desc">Cliente ausente (requiere tarjeta de visita)</span></div>
+          <div class="cod-item"><span class="cod-key">IN0003</span><span class="cod-desc">Sin regulador</span></div>
+          <div class="cod-item"><span class="cod-key">CA0015</span><span class="cod-desc">Medidor cruzado (obligatorio con cód. 6009)</span></div>
+          <div class="cod-item"><span class="cod-key">CA0064</span><span class="cod-desc">Medidor difiere (obligatorio con cód. 6008)</span></div>
+          <div class="cod-item"><span class="cod-key">CA0043</span><span class="cod-desc">Cambio por anomalía</span></div>
+          <div class="cod-item"><span class="cod-key">CS0001</span><span class="cod-desc">Cierre por seguridad — tipo 1</span></div>
+          <div class="cod-item"><span class="cod-key">CS0002</span><span class="cod-desc">Cierre por seguridad — tipo 2</span></div>
+          <div class="cod-item"><span class="cod-key">CS0003</span><span class="cod-desc">Cierre por seguridad — tipo 3</span></div>
+          <div class="cod-item"><span class="cod-key">RE0001</span><span class="cod-desc">Retiro a pedido</span></div>
+          <div class="cod-item"><span class="cod-key">VF0001</span><span class="cod-desc">Verificación de funcionamiento</span></div>
+          <div class="cod-item"><span class="cod-key">VL0001</span><span class="cod-desc">Verificación de lectura</span></div>
+        </div>
+      </div>
+
+    </div><!-- modal-body -->
+  </div><!-- modal-box -->
+</div><!-- modal-instrucciones -->
+
 </body>
 </html>
