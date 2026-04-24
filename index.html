@@ -106,6 +106,15 @@
   .filter-btn.f-warn.active .filter-count{background:rgba(0,0,0,0.15);}
   .filter-btn.f-ok.active .filter-count{background:rgba(0,0,0,0.15);}
   .empty-section{text-align:center;padding:36px;font-family:var(--mono);font-size:13px;color:var(--text-dimmer);}
+  /* modal carpeta destino */
+  #modal-carpeta{display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+  #modal-carpeta.open{display:flex;}
+  .carpeta-box{background:#16181f;border:1px solid var(--border);border-radius:14px;max-width:480px;width:100%;padding:32px;position:relative;}
+  .carpeta-box h3{font-family:var(--mono);font-size:15px;color:var(--blue);margin:0 0 8px;}
+  .carpeta-box p{font-size:13px;color:var(--text-dim);margin:0 0 20px;line-height:1.6;}
+  .carpeta-ruta{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-family:var(--mono);font-size:12px;color:var(--green);margin-bottom:20px;word-break:break-all;}
+  .carpeta-btns{display:flex;gap:10px;flex-wrap:wrap;}
+
   /* botón instrucciones */
   .tab-help{margin-left:auto;background:rgba(79,156,249,0.12)!important;color:var(--blue)!important;border-color:rgba(79,156,249,0.3)!important;}
   .tab-help:hover{background:rgba(79,156,249,0.25)!important;}
@@ -439,6 +448,13 @@ function switchTab(name,btn){
 }
 function setStep(n){[1,2,3,4].forEach(i=>{const el=document.getElementById('step'+i);el.classList.remove('active','done');if(i<n)el.classList.add('done');if(i===n)el.classList.add('active');});}
 function getTimeStr(){const n=new Date();return String(n.getHours()).padStart(2,'0')+String(n.getMinutes()).padStart(2,'0')+String(n.getSeconds()).padStart(2,'0');}
+function cleanCode(val){
+  // Limpia valores tipo "CAP - CERRADO A PEDIDO" → "CAP"
+  if(!val)return '';
+  const v=String(val).trim();
+  const dash=v.indexOf('-');
+  return dash>0?v.slice(0,dash).trim().toUpperCase():v.toUpperCase().trim();
+}
 function parseDate(raw){
   if(!raw)return null;
   const dp=raw.trim().split(' ')[0].split('T')[0];
@@ -543,6 +559,7 @@ function buildTableData(){
       const col=columnMapping[c.key];
       let v=col?(row[col]||''):'';
       if(c.key==='FECHA_VISITA_DOMICILIO')v=parseDate(v)||v;
+      if(c.key==='ESTADO_LINEA_DOMICILIO'||c.key==='COD_MOTIVO')v=cleanCode(v)||v;
       obj[c.key]=v;
     });
     obj['_raw']=row; // original para sugerencias
@@ -893,16 +910,19 @@ Verificar si EJECUTADA debería ser N con CODIGO_EJECUCION=${obsMatch.cod}.`
     err('COD_MOTIVO','Medidor distinto (6008): COD_MOTIVO debe ser CA0064','CA0064');
 
   // CA / IN ejecutados → NRO_MED_INSTALA obligatorio
-  if(['CA','IN'].includes(tipo)&&ejec==='S'){
+  // También aplica si tipo_requerido=IN y se ejecutó CS (instalación que quedó cerrada por seguridad)
+  const esINconCS = tipoReqAnticipado==='IN' && tipo==='CS' && ejec==='S';
+  if((['CA','IN'].includes(tipo)&&ejec==='S') || esINconCS){
     const medInsRaw=raw['NRO_MED_INSTALA']||raw['NRO_MEDIDOR_NUEVO']||raw['MED_NUEVO']||raw['MED_INSTALADO']||null;
+    const labelTipo=esINconCS?'IN→CS (instalación cerrada por seguridad)':tipo;
     if(!f.NRO_MED_INSTALA||isNaN(parseInt(f.NRO_MED_INSTALA))||parseInt(f.NRO_MED_INSTALA)<=0){
       if(medInsRaw&&parseInt(medInsRaw)>0)
-        err('NRO_MED_INSTALA',`Obligatorio para ${tipo} ejecutado.`,medInsRaw);
+        err('NRO_MED_INSTALA',`Obligatorio: ${labelTipo} — el medidor se instaló aunque quedó cerrado.`,medInsRaw);
       else
-        err('NRO_MED_INSTALA',`Obligatorio para ${tipo} ejecutado (número > 0)`);
+        err('NRO_MED_INSTALA',`Obligatorio: ${labelTipo} — el medidor se instaló aunque quedó cerrado (número > 0)`);
     }
     if(f.LECTURA_MED_INSTALA===''||f.LECTURA_MED_INSTALA===undefined||f.LECTURA_MED_INSTALA===null)
-      warn('LECTURA_MED_INSTALA',`Obligatorio para ${tipo} ejecutado`,'0');
+      warn('LECTURA_MED_INSTALA',`Obligatorio: ${labelTipo} — ingresar lectura inicial (0 si es nuevo).`,'0');
     if(f.NRO_MED_INSTALA&&f.NRO_MED_DOMICILIO&&f.NRO_MED_INSTALA===f.NRO_MED_DOMICILIO)
       err('NRO_MED_INSTALA','NRO_MED_INSTALA no puede ser igual a NRO_MED_DOMICILIO');
   }
@@ -933,7 +953,7 @@ Verificar si EJECUTADA debería ser N con CODIGO_EJECUCION=${obsMatch.cod}.`
   }
 
   // EJECUTADA=N → ESTADO_LINEA_DOMICILIO debe ser igual al estado anterior (ESTADO_LINEA del CSV)
-  const estadoAnterior=(raw["ESTADO_LINEA"]||"").toUpperCase().trim();
+  const estadoAnterior=cleanCode(raw["ESTADO_LINEA"]||"");
   if(ejec==="N"&&estadoAnterior&&ESTADO_VALS.includes(estadoAnterior)){
     if(est!==estadoAnterior){
       err("ESTADO_LINEA_DOMICILIO",
@@ -973,19 +993,154 @@ function formatFechaExport(val){
   if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(v))return v;
   return v;
 }
-function downloadTxt(){
+async function downloadTxt(){
   const lines=tableData.map(row=>
     CAMPOS.map(c=>{
       let val=row[c.key]||'';
-      // La fecha debe exportarse en dd/mm/yyyy
       if(c.key==='FECHA_VISITA_DOMICILIO')val=formatFechaExport(val);
       return val;
     }).join(';')+';'
   );
-  const blob=new Blob([lines.join('\r\n')],{type:'text/plain;charset=windows-1252'});
+  const contenido=lines.join('\r\n');
+
+  // Intentar guardar en carpeta destino si está configurada
+  if(dirHandle){
+    try {
+      const perm = await dirHandle.requestPermission({mode:'readwrite'});
+      if(perm==='granted'){
+        const fileHandle = await dirHandle.getFileHandle(generatedFilename,{create:true});
+        const writable = await fileHandle.createWritable();
+        await writable.write(new Blob([contenido],{type:'text/plain;charset=windows-1252'}));
+        await writable.close();
+        // Mostrar confirmación
+        const label=document.getElementById('carpeta-label');
+        const orig=label.textContent;
+        label.textContent='✅ Guardado en: '+dirHandle.name+'/'+generatedFilename;
+        label.style.color='var(--green)';
+        setTimeout(()=>{label.textContent=orig;},4000);
+        return;
+      }
+    } catch(e){
+      console.warn('No se pudo guardar en carpeta destino, usando descarga normal:',e);
+    }
+  }
+
+  // Fallback: descarga normal del navegador
+  const blob=new Blob([contenido],{type:'text/plain;charset=windows-1252'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=generatedFilename;a.click();URL.revokeObjectURL(url);
 }
+// ═══════════ CARPETA DESTINO ═══════════
+let dirHandle = null; // FileSystemDirectoryHandle activo
+
+async function iniciarCarpeta(){
+  // Intentar recuperar handle guardado en IndexedDB
+  try {
+    const saved = await idbGet('carpetaDestino');
+    if(saved){
+      // Verificar que el permiso sigue vigente
+      const perm = await saved.queryPermission({mode:'readwrite'});
+      if(perm === 'granted'){
+        dirHandle = saved;
+        actualizarLabelCarpeta();
+        return; // Ya tiene permiso, no preguntar
+      }
+      // Tiene handle guardado pero necesita confirmación del usuario
+      dirHandle = saved;
+      actualizarLabelCarpeta();
+      mostrarModalCarpeta();
+    }
+  } catch(e){ /* primera vez o no soportado */ }
+}
+
+function mostrarModalCarpeta(){
+  document.getElementById('carpeta-ruta-display').textContent = dirHandle ? dirHandle.name : '—';
+  document.getElementById('modal-carpeta').classList.add('open');
+}
+
+function cerrarModalCarpeta(){
+  document.getElementById('modal-carpeta').classList.remove('open');
+  if(!dirHandle) actualizarLabelCarpeta();
+}
+
+async function usarCarpetaGuardada(){
+  if(!dirHandle){ cerrarModalCarpeta(); return; }
+  try {
+    const perm = await dirHandle.requestPermission({mode:'readwrite'});
+    if(perm === 'granted'){
+      await idbSet('carpetaDestino', dirHandle);
+      actualizarLabelCarpeta();
+    } else {
+      dirHandle = null;
+      actualizarLabelCarpeta();
+    }
+  } catch(e){ dirHandle=null; actualizarLabelCarpeta(); }
+  cerrarModalCarpeta();
+}
+
+async function elegirCarpeta(){
+  if(!window.showDirectoryPicker){
+    alert('Tu navegador no soporta selector de carpeta. Se usará la carpeta de descargas del navegador.');
+    return;
+  }
+  try {
+    const handle = await window.showDirectoryPicker({mode:'readwrite'});
+    dirHandle = handle;
+    await idbSet('carpetaDestino', handle);
+    actualizarLabelCarpeta();
+  } catch(e){ /* cancelado por el usuario */ }
+}
+
+async function elegirCarpetaDesdeModal(){
+  cerrarModalCarpeta();
+  await elegirCarpeta();
+}
+
+function actualizarLabelCarpeta(){
+  const label = document.getElementById('carpeta-label');
+  const btn = document.getElementById('btn-carpeta');
+  if(dirHandle){
+    label.textContent = '📂 ' + dirHandle.name;
+    label.style.color = 'var(--green)';
+    btn.textContent = '📁 Cambiar carpeta';
+  } else {
+    label.textContent = 'No establecida — usará carpeta de descargas';
+    label.style.color = 'var(--text-dim)';
+    btn.textContent = '📁 Elegir carpeta';
+  }
+}
+
+// IndexedDB helpers para persistir FileSystemDirectoryHandle
+function idbGet(key){
+  return new Promise((res,rej)=>{
+    const req = indexedDB.open('oml_config',1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('config');
+    req.onsuccess = e => {
+      const tx = e.target.result.transaction('config','readonly');
+      const r = tx.objectStore('config').get(key);
+      r.onsuccess = () => res(r.result||null);
+      r.onerror = () => res(null);
+    };
+    req.onerror = () => res(null);
+  });
+}
+function idbSet(key,val){
+  return new Promise((res,rej)=>{
+    const req = indexedDB.open('oml_config',1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('config');
+    req.onsuccess = e => {
+      const tx = e.target.result.transaction('config','readwrite');
+      tx.objectStore('config').put(val,key);
+      tx.oncomplete = () => res();
+      tx.onerror = () => res();
+    };
+    req.onerror = () => res();
+  });
+}
+
+// Iniciar verificación de carpeta al cargar la página
+window.addEventListener('load', ()=>{ iniciarCarpeta(); });
+
 function openInstrucciones(){
   document.getElementById('modal-instrucciones').classList.add('open');
   document.body.style.overflow='hidden';
@@ -1101,6 +1256,20 @@ function buildReferenceTab(){
   });
 }
 </script>
+
+<!-- ═══════════════════ MODAL CARPETA DESTINO ═══════════════════ -->
+<div id="modal-carpeta">
+  <div class="carpeta-box">
+    <h3>📁 Carpeta de destino guardada</h3>
+    <p>Se encontró una carpeta de destino establecida previamente. ¿Querés usarla o elegir una diferente?</p>
+    <div class="carpeta-ruta" id="carpeta-ruta-display">—</div>
+    <div class="carpeta-btns">
+      <button class="btn btn-primary" onclick="usarCarpetaGuardada()" style="font-size:13px;padding:8px 20px">✓ Usar esta carpeta</button>
+      <button class="btn" onclick="elegirCarpetaDesdeModal()" style="font-size:13px;padding:8px 20px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;cursor:pointer">📁 Elegir otra</button>
+      <button class="btn" onclick="cerrarModalCarpeta()" style="font-size:13px;padding:8px 20px;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;cursor:pointer">Usar descargas</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════ MODAL INSTRUCCIONES ═══════════════════ -->
 <div id="modal-instrucciones">
