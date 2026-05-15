@@ -106,6 +106,19 @@
   .filter-btn.f-warn.active .filter-count{background:rgba(0,0,0,0.15);}
   .filter-btn.f-ok.active .filter-count{background:rgba(0,0,0,0.15);}
   .empty-section{text-align:center;padding:36px;font-family:var(--mono);font-size:13px;color:var(--text-dimmer);}
+  /* tabla reaperturas */
+  .reap-info-cell{background:rgba(79,156,249,0.06);color:var(--text-dim);font-size:11px;padding:6px 10px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid rgba(255,255,255,0.04);}
+  .reap-edit-cell{padding:4px;border-bottom:1px solid rgba(255,255,255,0.04);position:relative;}
+  .reap-edit-cell input,.reap-edit-cell select{background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:12px;padding:4px 8px;width:100%;box-sizing:border-box;}
+  .reap-edit-cell.err input,.reap-edit-cell.err select{border-color:var(--red);background:rgba(255,90,90,0.08);}
+  .reap-edit-cell.warn input,.reap-edit-cell.warn select{border-color:var(--yellow);background:rgba(255,193,7,0.08);}
+  .reap-edit-cell.ok input,.reap-edit-cell.ok select{border-color:rgba(62,207,142,0.4);background:rgba(62,207,142,0.05);}
+  .reap-th{background:var(--surface2);color:var(--text-dim);font-family:var(--mono);font-size:10px;text-transform:uppercase;padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+  .reap-th.info-th{color:rgba(79,156,249,0.7);font-style:italic;}
+  .reap-row-num{color:var(--text-dim);font-size:11px;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.04);text-align:center;}
+  .reap-err-msg{position:absolute;bottom:100%;left:0;background:#1e0a0a;border:1px solid var(--red);border-radius:4px;color:var(--red);font-size:11px;padding:4px 8px;white-space:nowrap;z-index:100;display:none;pointer-events:none;}
+  .reap-edit-cell:hover .reap-err-msg{display:block;}
+
   /* modal carpeta destino */
   #modal-carpeta{display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
   #modal-carpeta.open{display:flex;}
@@ -185,6 +198,7 @@
     <button class="tab active" onclick="switchTab('generar',this)">01 · GENERAR</button>
     <button class="tab" onclick="switchTab('validar',this)">02 · VALIDAR TXT</button>
     <button class="tab" onclick="switchTab('referencia',this)">03 · REFERENCIA</button>
+    <button class="tab" onclick="switchTab('reaperturas',this)">04 · REAPERTURAS</button>
     <button class="tab tab-help" onclick="openInstrucciones()">📖 INSTRUCCIONES</button>
   </div>
 
@@ -299,6 +313,34 @@
         <div class="table-scroll">
           <table><thead><tr id="val-table-head"></tr></thead><tbody id="val-table-body"></tbody></table>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB REAPERTURAS ═══ -->
+  <div id="tab-reaperturas" class="tab-panel">
+    <div class="card">
+      <div class="card-title">CARGAR ARCHIVO DE REAPERTURA</div>
+      <p style="font-size:13px;color:var(--text-dim);margin:0 0 16px">Cargá el archivo TXT que te envió Naturgy. La app lee los datos de la reapertura y te permite completar los campos de respuesta.</p>
+      <div class="drop-zone" id="reap-drop-zone" onclick="document.getElementById('reap-file-input').click()" ondragover="event.preventDefault()" ondrop="reapHandleDrop(event)">
+        <div class="drop-icon">📄</div>
+        <div class="drop-text">Arrastrá el CSV de reapertura o hacé click para seleccionarlo</div>
+        <div class="drop-sub" id="reap-file-name"></div>
+      </div>
+      <input type="file" id="reap-file-input" accept=".csv,.CSV,.txt,.TXT" style="display:none" onchange="reapHandleFile(this.files[0])">
+    </div>
+
+    <div class="card hidden" id="reap-card-table">
+      <div class="card-title">COMPLETAR RESPUESTA</div>
+      <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+        <div id="reap-stats" style="font-size:13px;color:var(--text-dim)"></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="reap-table" style="width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono)"></table>
+      </div>
+      <div style="margin-top:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="reapDownload()">⬇ DESCARGAR TXT RESPUESTA</button>
+        <span id="reap-filename-display" style="font-size:12px;color:var(--text-dim);font-family:var(--mono)"></span>
       </div>
     </div>
   </div>
@@ -1002,31 +1044,26 @@ async function downloadTxt(){
     }).join(';')+';'
   );
   const contenido=lines.join('\r\n');
+  const blob=new Blob([contenido],{type:'text/plain;charset=windows-1252'});
 
-  // Intentar guardar en carpeta destino si está configurada
-  if(dirHandle){
+  // Intentar "Guardar como" con selector de carpeta nativo
+  if(window.showSaveFilePicker){
     try {
-      const perm = await dirHandle.requestPermission({mode:'readwrite'});
-      if(perm==='granted'){
-        const fileHandle = await dirHandle.getFileHandle(generatedFilename,{create:true});
-        const writable = await fileHandle.createWritable();
-        await writable.write(new Blob([contenido],{type:'text/plain;charset=windows-1252'}));
-        await writable.close();
-        // Mostrar confirmación
-        const label=document.getElementById('carpeta-label');
-        const orig=label.textContent;
-        label.textContent='✅ Guardado en: '+dirHandle.name+'/'+generatedFilename;
-        label.style.color='var(--green)';
-        setTimeout(()=>{label.textContent=orig;},4000);
-        return;
-      }
+      const fileHandle=await window.showSaveFilePicker({
+        suggestedName: generatedFilename,
+        types:[{description:'Archivo TXT',accept:{'text/plain':['.txt','.TXT']}}],
+      });
+      const writable=await fileHandle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
     } catch(e){
-      console.warn('No se pudo guardar en carpeta destino, usando descarga normal:',e);
+      if(e.name==='AbortError')return; // usuario canceló — no hacer nada
+      console.warn('showSaveFilePicker falló, usando descarga normal:',e);
     }
   }
 
-  // Fallback: descarga normal del navegador
-  const blob=new Blob([contenido],{type:'text/plain;charset=windows-1252'});
+  // Fallback para Firefox/Safari: descarga normal
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=generatedFilename;a.click();URL.revokeObjectURL(url);
 }
@@ -1140,6 +1177,329 @@ function idbSet(key,val){
 
 // Iniciar verificación de carpeta al cargar la página
 window.addEventListener('load', ()=>{ iniciarCarpeta(); });
+
+// ═══════════════════════════════════════════════════
+// MÓDULO REAPERTURAS
+// ═══════════════════════════════════════════════════
+
+// Campos informativos (1-43): solo lectura
+const REAP_INFO_FIELDS = [
+  'NRO_LIST_REAPER','CONTRATISTA','OFICINA_COMERCIAL','NRO_SERVICIO',
+  'PROVINCIA_SERVICIO','LOCALIDAD_SERVICIO','CODIGO_LOCALIDAD','CALLE_SERVICIO',
+  'NRO_CALLE_SERVICIO','DATOS_DOM_SERVICIO','ENTRE_CALLE','Y_CALLE','ID_UNICO',
+  'CLIENTE_ESPECIAL','CATEGORIA_SERVICIO','PROVINCIA_RUTA','LOCALIDAD_RUTA',
+  'RUTA','TIPO_DOC_CLIENTE','NRO_DOC_CLIENTE','APELLIDO_RAZON_SOC','NOMBRE',
+  'NRO_ORDEN_LECTURA','PIDE_COMP','FECHA_SOLICITUD','OBS_CONTRATISTA',
+  'NRO_LINEA','NRO_MEDIDOR','NRO_RTU','ESTADO_LINEA','ID_UNIDAD_CORR',
+  'FABRICANTE_MEDIDOR','MODELO_MEDIDOR','CAPACIDAD','CTD_DIGITOS_MED',
+  'ULT_MARCABA_MED','ULT_MARCABA_CORR','ULT_MARCABA_DESP',
+  'LATITUD','LONGITUD','FECHA_ULT_LECT_UF130','TIPO_MOV_MEDIDOR_UF130','CTD_REAP_POST_UF130'
+];
+
+// Campos de respuesta (44-52): editables
+const REAP_RESP_FIELDS = [
+  {key:'REABIERTO',           type:'select', options:['S','N'],            label:'Reabierto'},
+  {key:'FECHA_REAL_REAP_VISITA', type:'text', placeholder:'DD/MM/YYYY HH:MM:SS', label:'Fecha visita'},
+  {key:'CLIENTE_AUSENTE',    type:'select', options:['S','N'],            label:'Cliente ausente'},
+  {key:'NRO_TARJETA_VISITA', type:'text',   placeholder:'0',              label:'Nro tarjeta'},
+  {key:'REABIERTO_X_TERCEROS',type:'select',options:['S','N'],            label:'Reabierto x terceros'},
+  {key:'OBSERVACIONES',      type:'text',   placeholder:'Máx. 200 chars', label:'Observaciones'},
+  {key:'MARCA_MED',          type:'text',   placeholder:'0',              label:'Marca med'},
+  {key:'MARCA_CORR',         type:'text',   placeholder:'0',              label:'Marca corr'},
+  {key:'MARCA_DESP',         type:'text',   placeholder:'0',              label:'Marca desp'},
+];
+
+// Campos informativos clave a mostrar en la tabla (resumen)
+const REAP_INFO_SHOW = [
+  'NRO_LIST_REAPER','NRO_SERVICIO','APELLIDO_RAZON_SOC','NOMBRE',
+  'CALLE_SERVICIO','NRO_CALLE_SERVICIO','NRO_MEDIDOR','ESTADO_LINEA',
+  'ULT_MARCABA_MED','ID_UNIDAD_CORR'
+];
+
+let reapData = [];       // filas de datos
+let reapHeaders = [];    // encabezados originales del TXT
+let reapFilename = '';   // nombre del archivo original
+
+function reapHandleDrop(e){
+  e.preventDefault();
+  const f = e.dataTransfer.files[0];
+  if(f) reapHandleFile(f);
+}
+
+function reapHandleFile(file){
+  if(!file) return;
+  reapFilename = file.name;
+  document.getElementById('reap-file-name').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = e => reapParseFile(e.target.result);
+  reader.readAsText(file, 'windows-1252');
+}
+
+function reapBuildFilename(row){
+  // REAP_[7 contratista]_[5 oficina]_[NRO_LIST_REAPER]_[DDMMYYYY].TXT
+  const contratista = 'SERYTEC'; // fijo
+  const oficina = (row['OFICINA_COMERCIAL']||'')
+    .toUpperCase()
+    .replace(/\s+/g,'_')
+    .substring(0,5);
+  const nroList = row['NRO_LIST_REAPER']||'0';
+  // Fecha de emisión: tomamos FECHA_SOLICITUD y la convertimos a DDMMYYYY
+  const fechaRaw = row['FECHA_SOLICITUD']||'';
+  let fecha = '';
+  // Formato esperado: DD-MM-YYYY HH:MM:SS
+  const m = fechaRaw.match(/(\d{2})[-/](\d{2})[-/](\d{4})/);
+  if(m) fecha = m[1]+m[2]+m[3];
+  else fecha = new Date().toLocaleDateString('es-AR').replace(/\//g,'').padStart(8,'0');
+  return `REAP_${contratista}_${oficina}_${nroList}_${fecha}.TXT`;
+}
+// Campos extras de Survey123 que NO van en el TXT exportado
+const REAP_CAMPOS_EXTRA = ['dispositivo','Personalizada','x','y','objectid','globalid','CreationDate','Creator','EditDate','Editor'];
+
+function reapConvertFecha(val){
+  if(!val||val.trim()==='') return '';
+  // Timestamp unix en milisegundos
+  if(/^\d{10,13}$/.test(val.trim())){
+    const ms = val.length===10 ? parseInt(val)*1000 : parseInt(val);
+    const d = new Date(ms);
+    const dd=String(d.getDate()).padStart(2,'0');
+    const mm=String(d.getMonth()+1).padStart(2,'0');
+    const yyyy=d.getFullYear();
+    const hh=String(d.getHours()).padStart(2,'0');
+    const min=String(d.getMinutes()).padStart(2,'0');
+    const ss=String(d.getSeconds()).padStart(2,'0');
+    return `${dd}/${mm}/${yyyy} ${hh}:${min}:${ss}`;
+  }
+  // Ya viene en formato correcto DD/MM/YYYY HH:MM:SS
+  if(/^\d{2}\/\d{2}\/\d{4}/.test(val.trim())) return val.trim();
+  // Formato DD-MM-YYYY HH:MM:SS
+  const m=val.trim().match(/(\d{2})-(\d{2})-(\d{4}) (\d{2}:\d{2}:\d{2})/);
+  if(m) return `${m[1]}/${m[2]}/${m[3]} ${m[4]}`;
+  return val.trim();
+}
+
+function reapParseFile(text){
+  const lines = text.trim().split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length < 2){ alert('El archivo debe tener encabezado y al menos una fila de datos.'); return; }
+
+  // Detectar separador: tabulación o punto y coma
+  const firstLine = lines[0];
+  const sep = firstLine.split('\t').length > firstLine.split(';').length ? '\t' : ';';
+
+  const allHeaders = firstLine.split(sep).map(h=>h.trim().replace(/^"|"$/g,''));
+
+  // Filtrar campos extra de Survey123 — guardar índices válidos
+  const validIndices = allHeaders.map((h,i)=>
+    REAP_CAMPOS_EXTRA.some(e=>e.toLowerCase()===h.toLowerCase()) ? -1 : i
+  ).filter(i=>i>=0);
+
+  reapHeaders = validIndices.map(i=>allHeaders[i]);
+
+  reapData = lines.slice(1).map((line,idx) => {
+    const allVals = line.split(sep).map(v=>v.trim().replace(/^"|"$/g,''));
+    const row = {_idx: idx+1};
+    reapHeaders.forEach((h,ii) => {
+      const origIdx = validIndices[ii];
+      row[h] = (allVals[origIdx]||'').trim();
+    });
+
+    // Convertir timestamp de FECHA_REAL_REAP_VISITA
+    if(row['FECHA_REAL_REAP_VISITA']){
+      row['FECHA_REAL_REAP_VISITA'] = reapConvertFecha(row['FECHA_REAL_REAP_VISITA']);
+    }
+    // Limpiar placeholder de fecha inválida
+    if(row['FECHA_REAL_REAP_VISITA']==='01/01/1900 00:00:00') row['FECHA_REAL_REAP_VISITA']='';
+
+    // Defaults para campos vacíos
+    if(!row['CLIENTE_AUSENTE']) row['CLIENTE_AUSENTE']='N';
+    if(!row['REABIERTO_X_TERCEROS']) row['REABIERTO_X_TERCEROS']='N';
+    if(!row['NRO_TARJETA_VISITA']) row['NRO_TARJETA_VISITA']='0';
+    if(!row['MARCA_MED']) row['MARCA_MED']='0';
+    if(!row['MARCA_CORR']) row['MARCA_CORR']='0';
+    if(!row['MARCA_DESP']) row['MARCA_DESP']='0';
+
+    return row;
+  });
+
+  // Construir nombre de archivo de salida usando datos de la primera fila
+  if(reapData.length>0){
+    reapFilename = reapBuildFilename(reapData[0]);
+  }
+  reapRenderTable();
+  document.getElementById('reap-card-table').classList.remove('hidden');
+  document.getElementById('reap-filename-display').textContent = '📄 ' + reapFilename;
+}
+
+function reapRenderTable(){
+  const table = document.getElementById('reap-table');
+
+  // Encabezado
+  let thead = '<thead><tr><th class="reap-th" style="text-align:center">#</th>';
+  REAP_INFO_SHOW.forEach(k => thead += `<th class="reap-th info-th">${k}</th>`);
+  REAP_RESP_FIELDS.forEach(f => thead += `<th class="reap-th" style="color:var(--yellow)">${f.label}</th>`);
+  thead += '</tr></thead>';
+
+  // Filas
+  let tbody = '<tbody>';
+  reapData.forEach((row, ri) => {
+    tbody += `<tr>`;
+    tbody += `<td class="reap-row-num">${row._idx}</td>`;
+
+    // Campos informativos
+    REAP_INFO_SHOW.forEach(k => {
+      const v = row[k]||'';
+      tbody += `<td class="reap-info-cell" title="${v}">${v||'—'}</td>`;
+    });
+
+    // Campos de respuesta editables
+    REAP_RESP_FIELDS.forEach(f => {
+      const v = row[f.key]||'';
+      const {cls, msg} = reapValidateField(f.key, row);
+      tbody += `<td class="reap-edit-cell ${cls}" id="reap-cell-${ri}-${f.key}">`;
+      if(msg) tbody += `<div class="reap-err-msg">${msg}</div>`;
+      if(f.type==='select'){
+        tbody += `<select onchange="reapUpdateField(${ri},'${f.key}',this.value)">`;
+        f.options.forEach(o => tbody += `<option value="${o}" ${v===o?'selected':''}>${o}</option>`);
+        tbody += `</select>`;
+      } else {
+        tbody += `<input type="text" value="${v}" placeholder="${f.placeholder||''}" 
+          oninput="reapUpdateField(${ri},'${f.key}',this.value)"
+          ${f.key==='OBSERVACIONES'?'maxlength="200"':''}
+        >`;
+      }
+      tbody += `</td>`;
+    });
+
+    tbody += '</tr>';
+  });
+  tbody += '</tbody>';
+
+  table.innerHTML = thead + tbody;
+  reapUpdateStats();
+}
+
+function reapUpdateField(ri, key, val){
+  reapData[ri][key] = val;
+  // Revalidar fila entera
+  REAP_RESP_FIELDS.forEach(f => {
+    const cell = document.getElementById(`reap-cell-${ri}-${f.key}`);
+    if(!cell) return;
+    const {cls, msg} = reapValidateField(f.key, reapData[ri]);
+    cell.className = `reap-edit-cell ${cls}`;
+    let errDiv = cell.querySelector('.reap-err-msg');
+    if(msg){
+      if(!errDiv){ errDiv = document.createElement('div'); errDiv.className='reap-err-msg'; cell.insertBefore(errDiv, cell.firstChild); }
+      errDiv.textContent = msg;
+    } else {
+      if(errDiv) errDiv.remove();
+    }
+  });
+  reapUpdateStats();
+}
+
+function reapValidateField(key, row){
+  const v = (row[key]||'').trim();
+  const reabierto = (row['REABIERTO']||'').toUpperCase();
+  const tieneCorrectora = !!(row['ID_UNIDAD_CORR']||'').trim();
+
+  if(key==='REABIERTO'){
+    if(!['S','N'].includes(v)) return {cls:'err', msg:'Debe ser S o N'};
+    return {cls:'ok', msg:''};
+  }
+  if(key==='FECHA_REAL_REAP_VISITA'){
+    if(!v) return {cls:'err', msg:'Obligatorio — fecha de visita'};
+    if(!/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}$/.test(v))
+      return {cls:'err', msg:'Formato: DD/MM/YYYY HH:MM:SS'};
+    if(v.startsWith('01/01/1900')) return {cls:'err', msg:'Fecha inválida (01/01/1900)'};
+    return {cls:'ok', msg:''};
+  }
+  if(key==='CLIENTE_AUSENTE'){
+    if(!['S','N'].includes(v)) return {cls:'err', msg:'Debe ser S o N'};
+    return {cls:'ok', msg:''};
+  }
+  if(key==='NRO_TARJETA_VISITA'){
+    if(v===''||isNaN(parseInt(v))) return {cls:'warn', msg:'Ingresar número o 0 si no hay tarjeta'};
+    return {cls:'ok', msg:''};
+  }
+  if(key==='REABIERTO_X_TERCEROS'){
+    if(!['S','N'].includes(v)) return {cls:'err', msg:'Debe ser S o N'};
+    return {cls:'ok', msg:''};
+  }
+  if(key==='OBSERVACIONES'){
+    if(v.length>200) return {cls:'err', msg:'Máximo 200 caracteres'};
+    return {cls:'ok', msg:''};
+  }
+  if(key==='MARCA_MED'){
+    if(reabierto==='S' && (v===''||isNaN(parseInt(v))))
+      return {cls:'err', msg:'Obligatorio cuando REABIERTO=S'};
+    if(reabierto==='N' && v!=='0') return {cls:'warn', msg:'Debe ser 0 cuando REABIERTO=N'};
+    return {cls:'ok', msg:''};
+  }
+  if(key==='MARCA_CORR'||key==='MARCA_DESP'){
+    if(reabierto==='S' && tieneCorrectora && (v===''||isNaN(parseInt(v))))
+      return {cls:'err', msg:'Obligatorio: línea con unidad correctora'};
+    if((!tieneCorrectora || reabierto==='N') && v!=='0')
+      return {cls:'warn', msg:'Debe ser 0 (sin correctora o no reabierto)'};
+    return {cls:'ok', msg:''};
+  }
+  return {cls:'', msg:''};
+}
+
+function reapUpdateStats(){
+  let errores=0, ok=0;
+  reapData.forEach(row => {
+    let rowErr=false;
+    REAP_RESP_FIELDS.forEach(f => {
+      const {cls} = reapValidateField(f.key, row);
+      if(cls==='err') rowErr=true;
+    });
+    if(rowErr) errores++; else ok++;
+  });
+  document.getElementById('reap-stats').innerHTML =
+    `<span style="color:var(--text)">${reapData.length} filas</span> · ` +
+    `<span style="color:var(--red)">${errores} con errores</span> · ` +
+    `<span style="color:var(--green)">${ok} completas</span>`;
+}
+
+async function reapDownload(){
+  if(!reapData.length){ alert('No hay datos cargados.'); return; }
+
+  // Verificar errores
+  let hayErrores = false;
+  reapData.forEach(row => {
+    REAP_RESP_FIELDS.forEach(f => {
+      const {cls} = reapValidateField(f.key, row);
+      if(cls==='err') hayErrores=true;
+    });
+  });
+  if(hayErrores && !confirm('Hay filas con errores. ¿Querés exportar de todas formas?')) return;
+
+  // Construir TXT con tabulaciones
+  const headerLine = reapHeaders.join('\t');
+  const dataLines = reapData.map(row =>
+    reapHeaders.map(h => row[h]||'').join('\t')
+  );
+  const contenido = [headerLine, ...dataLines].join('\r\n');
+  const blob = new Blob([contenido], {type:'text/plain;charset=windows-1252'});
+
+  // Guardar como
+  if(window.showSaveFilePicker){
+    try {
+      const fh = await window.showSaveFilePicker({
+        suggestedName: reapFilename,
+        types:[{description:'Archivo TXT',accept:{'text/plain':['.txt','.TXT']}}],
+      });
+      const w = await fh.createWritable();
+      await w.write(blob);
+      await w.close();
+      return;
+    } catch(e){ if(e.name==='AbortError') return; }
+  }
+  // Fallback
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=reapFilename; a.click();
+  URL.revokeObjectURL(url);
+}
 
 function openInstrucciones(){
   document.getElementById('modal-instrucciones').classList.add('open');
